@@ -18,15 +18,33 @@
         button { width: 100%; padding: 15px; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; margin-top: 10px; }
         .btn-update { background: var(--accent-color); }
         .btn-print { background: #34495e; }
+        .btn-share { background: #2980b9; }
         canvas { display: block; margin: 0 auto; background: white; }
         .important { color: #d35400; font-weight: 800; }
+
         @media print {
-            body { background: white; display: block; overflow: visible; }
+            @page { size: landscape; margin: 5mm; }
+            body { background: white; display: block; }
             .sidebar { display: none !important; }
-            .main-view { padding: 0; overflow: visible; width: 100%; }
-            .canvas-container { overflow: visible !important; max-height: none !important; background: white; border: none; padding: 0; width: 100% !important; margin: 0; }
-            .print-page { box-shadow: none; margin: 0; border: none; width: 100% !important; page-break-after: always; padding: 10mm; height: auto; }
-            canvas { width: 100% !important; height: auto !important; }
+            .main-view { padding: 0; width: 100%; }
+            .print-page {
+                box-shadow: none;
+                margin: 0 !important;
+                padding: 5mm !important;
+                width: 100% !important;
+                max-width: none !important;
+                page-break-after: always;
+            }
+            .canvas-container {
+                border: none;
+                background: white;
+                padding: 0;
+                overflow: hidden !important;
+            }
+            canvas {
+                max-width: 100% !important;
+                height: auto !important;
+            }
         }
     </style>
 </head>
@@ -58,6 +76,7 @@
     </div>
 
     <button class="btn-update" onclick="uiController.update()">PRZELICZ I ODSWIEŻ</button>
+    <button class="btn-share" onclick="uiController.shareProject()">🔗 UDOSTĘPNIJ PROJEKT</button>
     <button class="btn-print" onclick="window.print()">🖨️ DRUKUJ PROJEKT</button>
 </div>
 
@@ -83,6 +102,17 @@
         updateScale(val) {
             this.currentScale = parseFloat(val);
             if(this.lastCalc) this.drawFront(this.lastCalc);
+        },
+
+        shareProject() {
+            const params = new URLSearchParams();
+            const inputs = ['tankL', 'tankW', 'tankH', 'gap', 'ground', 'tanksPerRow', 'rowCount', 'beamSize', 'tolerance', 'maxSpan', 'heavierSide'];
+            inputs.forEach(id => params.set(id, document.getElementById(id).value));
+
+            const newUrl = window.location.origin + window.location.pathname + '?' + params.toString();
+            navigator.clipboard.writeText(newUrl).then(() => {
+                alert("Link do projektu został skopiowany do schowka!");
+            });
         },
 
         update() {
@@ -154,7 +184,8 @@
 
         drawFront(calc) {
             const cvs = document.getElementById('rackCanvas'); const ctx = cvs.getContext('2d');
-            const s = this.currentScale;
+            const s = (window.matchMedia('print').matches) ? (1000 / calc.totalW) : this.currentScale;
+
             cvs.width = calc.totalW * s + 350;
             cvs.height = calc.totalH * s + 300;
             ctx.clearRect(0,0, cvs.width, cvs.height);
@@ -200,8 +231,6 @@
                 }
             }
 
-            // POPRAWIONY WYMIAR - W ŚWIETLE (OD PODŁOGI DO DOŁU BELKI)
-            // Pozycje rysowania zgodne z logiką wyższych półek
             const firstLevelBottomY = oy + (calc.totalH - calc.p.ground) * s;
             const groundY = oy + calc.totalH * s;
             this.drawArrow(ctx, ox + (calc.p.beamSize + 15)*s, groundY, ox + (calc.p.beamSize + 15)*s, firstLevelBottomY, `${calc.p.ground}`, "red", false, true);
@@ -210,8 +239,20 @@
             this.drawArrow(ctx, ox, oy + calc.totalH * s + 70, ox + calc.totalW * s, oy + calc.totalH * s + 70, `${Math.round(calc.totalW)}`, "black");
         }
     };
+
     document.getElementById('zoomRange').addEventListener('input', (e) => uiController.updateScale(e.target.value));
-    window.onload = () => uiController.update();
+    window.onbeforeprint = () => { if(uiController.lastCalc) uiController.drawFront(uiController.lastCalc); };
+    window.onafterprint = () => { if(uiController.lastCalc) uiController.drawFront(uiController.lastCalc); };
+
+    window.onload = () => {
+        // WCZYTYWANIE PARAMETRÓW Z LINKU
+        const urlParams = new URLSearchParams(window.location.search);
+        urlParams.forEach((value, key) => {
+            const el = document.getElementById(key);
+            if (el) el.value = value;
+        });
+        uiController.update();
+    };
 </script>
 </body>
 </html>
