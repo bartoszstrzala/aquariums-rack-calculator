@@ -103,6 +103,31 @@
             .print-page { box-shadow: none; margin: 0 !important; padding: 5mm !important; width: 100% !important; page-break-after: always; }
             canvas { max-width: 100% !important; height: auto !important; }
         }
+
+        /* Styl dla Modala */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 2000;
+            left: 0; top: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.5);
+        }
+        .modal-content {
+            background-color: white;
+            margin: 5% auto;
+            padding: 25px;
+            border-radius: 8px;
+            width: 80%;
+            max-width: 700px;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .close-modal {
+            color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer;
+        }
+        .close-modal:hover { color: black; }
+        .help-rule { margin-bottom: 15px; border-left: 4px solid var(--accent-color); padding-left: 15px; }
     </style>
 </head>
 <body>
@@ -133,13 +158,10 @@
         <input type="range" id="zoomRange" min="0.1" max="1.5" step="0.05" value="0.4">
     </div>
 
-    <div style="margin-top: 20px; padding: 15px; background: #e8f4fd; border-radius: 6px; border: 1px solid #b3d7f2; font-size: 13px; line-height: 1.5;">
-        <h4 style="margin-top:0; color: #2980b9;">ℹ️ POMOC</h4>
-        <ul style="padding-left: 20px; margin: 0;">
-            <li>Po zmianie danych kliknij <strong>PRZELICZ I ODŚWIEŻ</strong>.</li>
-            <li>Przycisk <strong>UDOSTĘPNIJ</strong> kopiuje gotowy link do schowka.</li>
-            <li>Wydruk dopasowuje skalę rysunku do szerokości kartki.</li>
-        </ul>
+    <div style="margin-top: 20px;">
+        <button onclick="uiController.openHelp()" style="background: #e8f4fd; color: #2980b9; border: 1px solid #b3d7f2; padding: 10px; font-size: 14px;">
+            ❓ ZASADY KONSTRUKCJI I POMOC
+        </button>
     </div>
 
     <button class="btn-update" onclick="uiController.update(); uiController.closeSidebarOnMobile();">PRZELICZ I ODSWIEŻ</button>
@@ -253,10 +275,53 @@
             this.drawArrow(ctx, ox + (calc.p.beamSize + 15)*s, groundY, ox + (calc.p.beamSize + 15)*s, firstLevelBottomY, `${calc.p.ground}`, "red", false, true);
             this.drawArrow(ctx, ox - 80, oy, ox - 80, oy + calc.totalH * s, `${Math.round(calc.totalH)}`, "black");
             this.drawArrow(ctx, ox, oy + calc.totalH * s + 80, ox + calc.totalW * s, oy + calc.totalH * s + 80, `${Math.round(calc.totalW)}`, "black");
+        },
+
+        openHelp() { document.getElementById('helpModal').style.display = 'block'; },
+        closeHelp() { document.getElementById('helpModal').style.display = 'none'; },
+        setupModalClose() {
+            window.onclick = (event) => {
+                if (event.target == document.getElementById('helpModal')) this.closeHelp();
+            }
         }
     };
     document.getElementById('zoomRange').addEventListener('input', (e) => uiController.updateScale(e.target.value));
     window.onload = () => { const params = new URLSearchParams(window.location.search); params.forEach((v, k) => { if(document.getElementById(k)) document.getElementById(k).value = v; }); uiController.update(); };
 </script>
+
+<div id="helpModal" class="modal">
+    <div class="modal-content">
+        <span class="close-modal" onclick="uiController.closeHelp()">&times;</span>
+        <h2 style="color: var(--primary-color);">📐 Zasady konstrukcji regału</h2>
+
+        <div class="help-rule">
+            <strong>1. Rozpiętość przęsła (Max 1000mm):</strong>
+            Dlaczego metr? Przy kantówce 45-50mm, obciążenie rzędu 200-300kg na metr bieżący powoduje mierzalne ugięcie drewna. Przekroczenie 100cm bez pionowej podpory ryzykuje "pracę" belek, co może prowadzić do pęknięcia dna akwarium.
+        </div>
+
+        <div class="help-rule">
+            <strong>2. Prześwit serwisowy (Gap):</strong>
+            Zalecane minimum to 200mm. Pozwala to na swobodne włożenie siatki, węża do podmian oraz operowanie ręką wewnątrz zbiornika bez konieczności odsuwania całego zestawu.
+        </div>
+
+        <div class="help-rule">
+            <strong>3. Grubość półki:</strong>
+            Półka (np. sklejka 18mm) nie tylko trzyma akwarium, ale usztywnia całą konstrukcję regału, zapobiegając "składaniu się" kantówek na boki.
+        </div>
+
+        <div class="help-rule">
+            <strong>4. Wysokość od ziemi:</strong>
+            Minimum 150mm pozwala na swobodny dostęp mopem pod regał oraz zapewnia wentylację dolnej półki, co chroni drewno przed wilgocią.
+        </div>
+
+        <div class="help-rule">
+            <strong>5. Dociążenie stron:</strong>
+            Jeśli regał stoi w rogu lub przy przejściu, wybierz dociążenie strony, która ma być bardziej stabilna ("cięższa" wizualnie i konstrukcyjnie).
+        </div>
+
+        <button onclick="uiController.closeHelp()" style="background: var(--primary-color); margin-top: 20px;">Zrozumiałem</button>
+    </div>
+</div>
+
 </body>
 </html>
