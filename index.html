@@ -3,90 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PROJEKT REGAŁU - v1.0.0</title>
+    <title>PROJEKT REGAŁU - FINAL STABLE</title>
     <style>
         :root { --primary-color: #2c3e50; --accent-color: #27ae60; --bg-color: #f4f7f6; }
-
-        body {
-            font-family: 'Segoe UI', sans-serif;
-            display: flex;
-            flex-direction: row;
-            min-height: 100vh;
-            margin: 0;
-            background: var(--bg-color);
-        }
-
-        #mobileToggle {
-            display: none;
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            z-index: 1000;
-            background: var(--primary-color);
-            padding: 15px;
-            border-radius: 50%;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            width: 60px;
-            height: 60px;
-            font-size: 24px;
-            border: none;
-            color: white;
-            cursor: pointer;
-        }
-
-        .sidebar {
-            background: white;
-            padding: 25px;
-            width: 420px;
-            min-width: 420px;
-            box-shadow: 2px 0 15px rgba(0,0,0,0.1);
-            height: 100vh;
-            overflow-y: auto;
-            box-sizing: border-box;
-            z-index: 10;
-        }
-
-        .main-view {
-            flex-grow: 1;
-            overflow-y: auto;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            width: 100%;
-            box-sizing: border-box;
-        }
-
-        .canvas-container {
-            width: 100%;
-            max-height: 75vh;
-            overflow: auto;
-            background: #eee;
-            border: 2px solid #ccc;
-            border-radius: 8px;
-            padding: 15px;
-            box-sizing: border-box;
-            margin-bottom: 20px;
-        }
-
-        .print-page {
-            background: white;
-            width: 100%;
-            max-width: 210mm;
-            margin: 0 auto 30px auto;
-            padding: 10mm;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            box-sizing: border-box;
-        }
-
-        @media (max-width: 800px) {
-            body { flex-direction: column; height: auto; }
-            #mobileToggle { display: block; }
-            .sidebar { width: 100%; min-width: 100%; height: auto; position: relative; }
-            .sidebar.hidden { display: none; }
-            .canvas-container { max-height: 60vh; }
-        }
-
+        body { font-family: 'Segoe UI', sans-serif; display: flex; flex-direction: row; min-height: 100vh; margin: 0; background: var(--bg-color); }
+        #mobileToggle { display: none; position: fixed; bottom: 20px; right: 20px; z-index: 1000; background: var(--primary-color); padding: 15px; border-radius: 50%; width: 60px; height: 60px; font-size: 24px; border: none; color: white; cursor: pointer; }
+        .sidebar { background: white; padding: 25px; width: 420px; min-width: 420px; box-shadow: 2px 0 15px rgba(0,0,0,0.1); height: 100vh; overflow-y: auto; box-sizing: border-box; z-index: 10; }
+        .main-view { flex-grow: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; align-items: center; width: 100%; box-sizing: border-box; }
+        .canvas-container { width: 100%; max-height: 75vh; overflow: auto; background: #eee; border: 2px solid #ccc; border-radius: 8px; padding: 15px; box-sizing: border-box; margin-bottom: 20px; }
+        .print-page { background: white; width: 100%; max-width: 210mm; margin: 0 auto 30px auto; padding: 10mm; box-shadow: 0 0 10px rgba(0,0,0,0.1); box-sizing: border-box; }
+        .page-landscape { max-width: 297mm; }
+        @media (max-width: 800px) { body { flex-direction: column; } #mobileToggle { display: block; } .sidebar { width: 100%; min-width: 100%; height: auto; } .sidebar.hidden { display: none; } }
         .input-group { margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
         input, select { width: 110px; padding: 5px; border: 1px solid #ccc; border-radius: 4px; }
         button { width: 100%; padding: 15px; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; margin-top: 10px; }
@@ -94,40 +21,10 @@
         .btn-print { background: #34495e; }
         .btn-share { background: #2980b9; }
         .important { color: #d35400; font-weight: 800; }
-
-        @media print {
-            @page { size: landscape; margin: 5mm; }
-            body { background: white; display: block; }
-            .sidebar, #mobileToggle { display: none !important; }
-            .main-view { padding: 0; width: 100%; }
-            .print-page { box-shadow: none; margin: 0 !important; padding: 5mm !important; width: 100% !important; page-break-after: always; }
-            canvas { max-width: 100% !important; height: auto !important; }
-        }
-
-        /* Styl dla Modala */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 2000;
-            left: 0; top: 0; width: 100%; height: 100%;
-            background-color: rgba(0,0,0,0.5);
-        }
-        .modal-content {
-            background-color: white;
-            margin: 5% auto;
-            padding: 25px;
-            border-radius: 8px;
-            width: 80%;
-            max-width: 700px;
-            max-height: 85vh;
-            overflow-y: auto;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-        }
-        .close-modal {
-            color: #aaa; float: right; font-size: 28px; font-weight: bold; cursor: pointer;
-        }
-        .close-modal:hover { color: black; }
-        .help-rule { margin-bottom: 15px; border-left: 4px solid var(--accent-color); padding-left: 15px; }
+        .step-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 18px; }
+        .step-table th, .step-table td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+        .step-table th { background-color: #f2f2f2; }
+        @media print { .sidebar, #mobileToggle { display: none !important; } .print-page { box-shadow: none; margin: 0 !important; width: 100% !important; page-break-after: always; } }
     </style>
 </head>
 <body>
@@ -135,10 +32,6 @@
 <button id="mobileToggle" onclick="uiController.toggleSidebar()">⚙️</button>
 
 <div class="sidebar" id="sidebar">
-    <div>
-        Konstrukcja regału: <a href="https://www.youtube.com/watch?v=Nu3S3PX9nlc" target="_blank">https://www.youtube.com/watch?v=Nu3S3PX9nlc</a>
-        <br /><br />
-    </div>
     <h2 style="margin-top:0">⚙️ KONFIGURACJA</h2>
     <div class="input-group"><label>Dł. akwarium (mm)</label> <input type="number" id="tankL" value="400"></div>
     <div class="input-group"><label>Szer. akwarium (mm)</label> <input type="number" id="tankW" value="600"></div>
@@ -153,15 +46,9 @@
     <div class="input-group"><label>Max rozpiętość (mm)</label> <input type="number" id="maxSpan" value="1000"></div>
     <div class="input-group"><label>Dociążenie</label><select id="heavierSide"><option value="left">Lewa strona</option><option value="right">Prawa strona</option></select></div>
 
-    <div style="margin-top: 20px; padding: 10px; background: #f9f9f9; border-radius: 5px; border: 1px solid #ddd;">
+    <div style="margin-top: 20px; padding: 10px; background: #f9f9f9; border-radius: 5px;">
         <label style="font-weight: bold; font-size: 14px;">🔍 POWIĘKSZENIE PODGLĄDU</label>
         <input type="range" id="zoomRange" min="0.1" max="1.5" step="0.05" value="0.4">
-    </div>
-
-    <div style="margin-top: 20px;">
-        <button onclick="uiController.openHelp()" style="background: #e8f4fd; color: #2980b9; border: 1px solid #b3d7f2; padding: 10px; font-size: 14px;">
-            ❓ ZASADY KONSTRUKCJI I POMOC
-        </button>
     </div>
 
     <button class="btn-update" onclick="uiController.update(); uiController.closeSidebarOnMobile();">PRZELICZ I ODSWIEŻ</button>
@@ -171,15 +58,16 @@
 
 <div class="main-view">
     <div class="print-page page-landscape">
-        <div class="header">
-            <h1>ARKUSZ 1: WIDOK FRONTOWY REGAŁU</h1>
-            <p id="totalDimsHeader" style="font-size: 20px; font-weight: bold; color: #d35400;"></p>
-        </div>
+        <div class="header"><h1>ARKUSZ 1: WIDOK FRONTOWY</h1><p id="totalDimsHeader" style="font-weight:bold; color:#d35400; font-size:18px;"></p></div>
         <div class="canvas-container"><canvas id="rackCanvas"></canvas></div>
     </div>
     <div class="print-page">
-        <div class="header"><h1>ARKUSZ 2: LISTA CZĘŚCI I MONTAŻ</h1></div>
-        <div id="cuttingListContent" style="font-size: 19px; line-height: 2.2;"></div>
+        <div class="header"><h1>ARKUSZ 2: LISTA CZĘŚCI</h1></div>
+        <div id="cuttingListContent" style="font-size: 18px; line-height: 1.8;"></div>
+    </div>
+    <div class="print-page">
+        <div class="header"><h1>ARKUSZ 3: INSTRUKCJA MONTAŻU BOKÓW</h1></div>
+        <div id="sideStepByStep"></div>
     </div>
 </div>
 
@@ -190,7 +78,6 @@
 
         toggleSidebar() { document.getElementById('sidebar').classList.toggle('hidden'); },
         closeSidebarOnMobile() { if (window.innerWidth <= 800) document.getElementById('sidebar').classList.add('hidden'); },
-        updateScale(val) { this.currentScale = parseFloat(val); if(this.lastCalc) this.drawFront(this.lastCalc); },
 
         shareProject() {
             const params = new URLSearchParams();
@@ -207,26 +94,42 @@
                 gap: +document.getElementById('gap').value, heavierSide: document.getElementById('heavierSide').value,
                 ground: +document.getElementById('ground').value, shelfThick: +document.getElementById('shelfThick').value
             };
+
             const tankSpace = p.tankL + (p.tolerance / p.tanksPerRow);
             const maxInBay = Math.floor(p.maxSpan / tankSpace) || 1;
             let dist = [], rem = p.tanksPerRow;
             while (rem > 0) { let take = Math.min(rem, maxInBay); dist.push(take); rem -= take; }
             if (p.heavierSide === 'right') dist.reverse();
+
             const bayWidths = dist.map(count => (count * p.tankL) + (count * (p.tolerance / p.tanksPerRow)));
             const totalW = bayWidths.reduce((a, b) => a + b, 0) + ((dist.length + 1) * p.beamSize);
             const totalH = p.ground + (p.rowCount * (p.beamSize + p.shelfThick + p.tankH + p.gap)) + p.beamSize;
+
             this.lastCalc = { p, dist, bayWidths, totalW, totalH, bayCount: dist.length, levels: p.rowCount + 1 };
             this.render(this.lastCalc);
         },
 
         render(calc) {
-            document.getElementById('totalDimsHeader').innerText = `WYMIAR: ${Math.round(calc.totalW)} x ${Math.round(calc.totalH)} x ${calc.p.tankW} mm`;
+            document.getElementById('totalDimsHeader').innerText = `WYMIAR REGAŁU: ${Math.round(calc.totalW)} x ${Math.round(calc.totalH)} x ${calc.p.tankW} mm`;
+
             let html = `• <strong>Nogi:</strong> ${(calc.bayCount + 1) * 2} szt. x <span class="important">${Math.round(calc.totalH)}mm</span><br>
-                        • <strong>Belki podłużne:</strong> ${calc.levels * 2} szt. x <span class="important">${Math.round(calc.totalW)}mm</span><br>
-                        • <strong>Poprzeczki:</strong> ${(calc.bayCount + 1) * calc.levels} szt. x <span class="important">${calc.p.tankW}mm</span><br><br>
-                        <strong>Półki:</strong><br>`;
-            calc.bayWidths.forEach((w, i) => html += `• Przęsło ${i+1}: ${calc.p.rowCount} szt. x <span class="important">${Math.round(w)} x ${calc.p.tankW}mm</span><br>`);
+                    • <strong>Belki podłużne:</strong> ${calc.levels * 2} szt. x <span class="important">${Math.round(calc.totalW)}mm</span><br>
+                    • <strong>Poprzeczki boczne (krótkie):</strong> ${(calc.bayCount + 1) * calc.levels} szt. x <span class="important">${calc.p.tankW - (2 * calc.p.beamSize)}mm</span><br><br>
+                    <strong>Formatki półek:</strong><br>`;
+            calc.bayWidths.forEach((w, i) => {
+                html += `• Przęsło ${i+1}: ${calc.p.rowCount} szt. x <span class="important">${Math.round(w)} x ${calc.p.tankW}mm</span><br>`;
+            });
             document.getElementById('cuttingListContent').innerHTML = html;
+
+            let stepHtml = `<p>Przygotuj nogi i zaznacz na nich miejsca montażu poprzeczek bocznych:</p><table class="step-table"><tr><th>Poziom</th><th>Wysokość do GÓRY poprzeczki (od podłogi)</th></tr>`;
+            const rowStep = (calc.p.tankH + calc.p.gap + calc.p.beamSize + calc.p.shelfThick);
+            for (let i = 0; i < calc.levels; i++) {
+                const h = calc.p.ground + calc.p.beamSize + (i * rowStep);
+                stepHtml += `<tr><td>Poziom ${i+1}</td><td><strong>${Math.round(h)} mm</strong></td></tr>`;
+            }
+            stepHtml += `</table>`;
+            document.getElementById('sideStepByStep').innerHTML = stepHtml;
+
             this.drawFront(calc);
         },
 
@@ -237,91 +140,72 @@
             const drawHead = (tx, ty, a) => {
                 ctx.beginPath(); ctx.moveTo(tx, ty);
                 ctx.lineTo(tx - head * Math.cos(a - 0.4), ty - head * Math.sin(a - 0.4));
-                ctx.lineTo(tx - head * Math.cos(a + 0.4), ty - head * Math.sin(a + 0.4));
-                ctx.fill();
+                ctx.lineTo(tx - head * Math.cos(a + 0.4), ty - head * Math.sin(a + 0.4)); ctx.fill();
             };
             drawHead(x2, y2, angle); drawHead(x1, y1, angle + Math.PI);
             ctx.font = "bold 13px Arial";
             const mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
-            if (horizontalLabel) { ctx.textAlign = "left"; ctx.textBaseline = "middle"; ctx.fillText(label, mx + 10, my); }
-            else { ctx.save(); ctx.translate(mx, my); if(Math.abs(x1-x2) < 2) { ctx.rotate(-Math.PI/2); ctx.textAlign = "center"; ctx.fillText(label, 0, -12); }
-            else { ctx.textAlign = "center"; ctx.fillStyle = labelInside ? "white" : "black"; ctx.fillText(label, 0, labelInside ? 5 : -10); } ctx.restore(); } ctx.restore();
+            if (horizontalLabel) { ctx.textAlign = "left"; ctx.textBaseline = "middle"; ctx.fillText(label, mx + 12, my); }
+            else {
+                ctx.save(); ctx.translate(mx, my);
+                if(Math.abs(x1-x2) < 2) { ctx.rotate(-Math.PI/2); ctx.textAlign = "center"; ctx.fillText(label, 0, -15); }
+                else { ctx.textAlign = "center"; ctx.fillStyle = labelInside ? "white" : "black"; ctx.fillText(label, 0, labelInside ? 5 : -12); }
+                ctx.restore();
+            }
+            ctx.restore();
         },
 
         drawFront(calc) {
             const cvs = document.getElementById('rackCanvas'); const ctx = cvs.getContext('2d');
-            const s = (window.matchMedia('print').matches) ? (1000 / calc.totalW) : this.currentScale;
-            const offsetX = 120, offsetY = 150;
+            const s = this.currentScale; const offsetX = 180, offsetY = 200;
             cvs.width = calc.totalW * s + (offsetX * 2); cvs.height = calc.totalH * s + (offsetY * 2);
             ctx.clearRect(0,0, cvs.width, cvs.height);
             const ox = offsetX, oy = offsetY, rowStep = (calc.p.tankH + calc.p.gap + calc.p.beamSize + calc.p.shelfThick);
+
             for (let i = 0; i < calc.levels; i++) {
                 const yBeam = oy + (calc.totalH - calc.p.ground - calc.p.beamSize - (i * rowStep)) * s;
-                ctx.fillStyle = "#8d6e63"; ctx.fillRect(ox, yBeam, calc.totalW * s, calc.p.beamSize * s); ctx.strokeRect(ox, yBeam, calc.totalW * s, calc.p.beamSize * s);
-                if(i < calc.p.rowCount) { ctx.fillStyle = "#bdc3c7"; const yShelf = yBeam - (calc.p.shelfThick * s); ctx.fillRect(ox, yShelf, calc.totalW * s, calc.p.shelfThick * s); ctx.strokeRect(ox, yShelf, calc.totalW * s, calc.p.shelfThick * s); }
+                ctx.fillStyle = "#8d6e63"; ctx.fillRect(ox, yBeam, calc.totalW * s, calc.p.beamSize * s);
+                ctx.strokeRect(ox, yBeam, calc.totalW * s, calc.p.beamSize * s);
+                if(i < calc.p.rowCount) {
+                    ctx.fillStyle = "#bdc3c7";
+                    const yShelf = yBeam - (calc.p.shelfThick * s);
+                    ctx.fillRect(ox, yShelf, calc.totalW * s, calc.p.shelfThick * s);
+                    ctx.strokeRect(ox, yShelf, calc.totalW * s, calc.p.shelfThick * s);
+                }
             }
+
             ctx.fillStyle = "#4a302a"; let lx = ox, legPositions = [];
-            for (let b = 0; b <= calc.bayCount; b++) { ctx.fillRect(lx, oy, calc.p.beamSize * s, calc.totalH * s); ctx.strokeRect(lx, oy, calc.p.beamSize * s, calc.totalH * s); legPositions.push(lx); lx += (calc.bayWidths[b] || 0) * s + (calc.p.beamSize * s); }
+            for (let b = 0; b <= calc.bayCount; b++) {
+                ctx.fillRect(lx, oy, calc.p.beamSize * s, calc.totalH * s);
+                ctx.strokeRect(lx, oy, calc.p.beamSize * s, calc.totalH * s);
+                legPositions.push(lx);
+                lx += (calc.bayWidths[b] || 0) * s + (calc.p.beamSize * s);
+            }
+
             for (let i = 0; i < calc.p.rowCount; i++) {
                 const yBeam = oy + (calc.totalH - calc.p.ground - calc.p.beamSize - (i * rowStep)) * s, yShelfTop = yBeam - (calc.p.shelfThick * s);
                 for (let b = 0; b < calc.bayCount; b++) {
                     const bw = calc.bayWidths[b] * s, cx = legPositions[b] + (calc.p.beamSize * s), count = calc.dist[b], startA = cx + (bw - (count * calc.p.tankL * s)) / 2;
                     for (let j = 0; j < count; j++) { ctx.fillStyle = "rgba(173, 216, 230, 0.7)"; ctx.fillRect(startA + (j * calc.p.tankL * s) + 2, yShelfTop - calc.p.tankH * s, calc.p.tankL * s - 4, calc.p.tankH * s); }
                     this.drawArrow(ctx, cx, yBeam + (calc.p.beamSize*s/2), cx + bw, yBeam + (calc.p.beamSize*s/2), `${Math.round(calc.bayWidths[b])}`, "white", true);
-                    const arrowX = cx + 20*s; this.drawArrow(ctx, arrowX, yShelfTop, arrowX, yShelfTop - calc.p.tankH * s, `${calc.p.tankH}`, "blue", false, true); this.drawArrow(ctx, arrowX, yShelfTop - calc.p.tankH * s, arrowX, yShelfTop - calc.p.tankH * s - calc.p.gap * s, `${calc.p.gap}`, "green", false, true);
+                    const arrowX = cx + 20*s;
+                    this.drawArrow(ctx, arrowX, yShelfTop, arrowX, yShelfTop - calc.p.tankH * s, `${calc.p.tankH}`, "blue", false, true);
+                    this.drawArrow(ctx, arrowX, yShelfTop - calc.p.tankH * s, arrowX, yShelfTop - calc.p.tankH * s - calc.p.gap * s, `${calc.p.gap}`, "green", false, true);
                 }
             }
             const firstLevelBottomY = oy + (calc.totalH - calc.p.ground) * s, groundY = oy + calc.totalH * s;
             this.drawArrow(ctx, ox + (calc.p.beamSize + 15)*s, groundY, ox + (calc.p.beamSize + 15)*s, firstLevelBottomY, `${calc.p.ground}`, "red", false, true);
-            this.drawArrow(ctx, ox - 80, oy, ox - 80, oy + calc.totalH * s, `${Math.round(calc.totalH)}`, "black");
-            this.drawArrow(ctx, ox, oy + calc.totalH * s + 80, ox + calc.totalW * s, oy + calc.totalH * s + 80, `${Math.round(calc.totalW)}`, "black");
-        },
-
-        openHelp() { document.getElementById('helpModal').style.display = 'block'; },
-        closeHelp() { document.getElementById('helpModal').style.display = 'none'; },
-        setupModalClose() {
-            window.onclick = (event) => {
-                if (event.target == document.getElementById('helpModal')) this.closeHelp();
-            }
+            this.drawArrow(ctx, ox - 120, oy, ox - 120, oy + calc.totalH * s, `WYS: ${Math.round(calc.totalH)}`, "black");
+            this.drawArrow(ctx, ox, oy + calc.totalH * s + 120, ox + calc.totalW * s, oy + calc.totalH * s + 120, `SZER: ${Math.round(calc.totalW)}`, "black");
         }
     };
+
     document.getElementById('zoomRange').addEventListener('input', (e) => uiController.updateScale(e.target.value));
-    window.onload = () => { const params = new URLSearchParams(window.location.search); params.forEach((v, k) => { if(document.getElementById(k)) document.getElementById(k).value = v; }); uiController.update(); };
+    window.onload = () => {
+        const params = new URLSearchParams(window.location.search);
+        params.forEach((v, k) => { if (document.getElementById(k)) document.getElementById(k).value = v; });
+        uiController.update();
+    };
 </script>
-
-<div id="helpModal" class="modal">
-    <div class="modal-content">
-        <span class="close-modal" onclick="uiController.closeHelp()">&times;</span>
-        <h2 style="color: var(--primary-color);">📐 Zasady konstrukcji regału</h2>
-
-        <div class="help-rule">
-            <strong>1. Rozpiętość przęsła (Max 1000mm):</strong>
-            Dlaczego metr? Przy kantówce 45-50mm, obciążenie rzędu 200-300kg na metr bieżący powoduje mierzalne ugięcie drewna. Przekroczenie 100cm bez pionowej podpory ryzykuje "pracę" belek, co może prowadzić do pęknięcia dna akwarium.
-        </div>
-
-        <div class="help-rule">
-            <strong>2. Prześwit serwisowy (Gap):</strong>
-            Zalecane minimum to 200mm. Pozwala to na swobodne włożenie siatki, węża do podmian oraz operowanie ręką wewnątrz zbiornika bez konieczności odsuwania całego zestawu.
-        </div>
-
-        <div class="help-rule">
-            <strong>3. Grubość półki:</strong>
-            Półka (np. sklejka 18mm) nie tylko trzyma akwarium, ale usztywnia całą konstrukcję regału, zapobiegając "składaniu się" kantówek na boki.
-        </div>
-
-        <div class="help-rule">
-            <strong>4. Wysokość od ziemi:</strong>
-            Minimum 150mm pozwala na swobodny dostęp mopem pod regał oraz zapewnia wentylację dolnej półki, co chroni drewno przed wilgocią.
-        </div>
-
-        <div class="help-rule">
-            <strong>5. Dociążenie stron:</strong>
-            Jeśli regał stoi w rogu lub przy przejściu, wybierz dociążenie strony, która ma być bardziej stabilna ("cięższa" wizualnie i konstrukcyjnie).
-        </div>
-
-        <button onclick="uiController.closeHelp()" style="background: var(--primary-color); margin-top: 20px;">Zrozumiałem</button>
-    </div>
-</div>
-
 </body>
 </html>
