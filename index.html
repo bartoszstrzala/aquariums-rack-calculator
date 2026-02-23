@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
-    <title>Projektant Regału - Wersja Stabilna</title>
+    <title>Projektant Regału - Multi-Bay System FIXED</title>
     <style>
         :root { --primary-color: #2c3e50; --accent-color: #27ae60; --bg-color: #f4f7f6; }
         body { font-family: 'Segoe UI', sans-serif; display: flex; height: 100vh; margin: 0; background: var(--bg-color); color: var(--primary-color); overflow: hidden; }
@@ -32,7 +32,7 @@
             flex-grow: 1;
             overflow: auto;
             background: #eee;
-            padding: 60px;
+            padding: 80px;
             display: flex;
             justify-content: flex-start;
             align-items: flex-start;
@@ -51,23 +51,23 @@
 
 <div class="sidebar">
     <h3>Ustawienia Projektu</h3>
-    <div class="input-group"><label>Długość akwarium (mm)</label> <input type="number" id="tankL" value="200"></div>
-    <div class="input-group"><label>Szerokość akwarium (mm)</label> <input type="number" id="tankW" value="400"></div>
-    <div class="input-group"><label>Wysokość akwarium (mm)</label> <input type="number" id="tankH" value="200"></div>
-    <div class="input-group"><label>Prześwit serwisowy (mm)</label> <input type="number" id="gap" value="200"></div>
-    <div class="input-group"><label>Akwaria w rzędzie (łącznie)</label> <input type="number" id="tanksPerRow" value="5"></div>
-    <div class="input-group"><label>Ilość poziomów</label> <input type="number" id="rowCount" value="3"></div>
+    <div class="input-group"><label>Dł. akwarium (mm)</label> <input type="number" id="tankL" value="400"></div>
+    <div class="input-group"><label>Szer. akwarium (mm)</label> <input type="number" id="tankW" value="400"></div>
+    <div class="input-group"><label>Wys. akwarium (mm)</label> <input type="number" id="tankH" value="400"></div>
+    <div class="input-group"><label>Prześwit serwis (mm)</label> <input type="number" id="gap" value="200"></div>
+    <div class="input-group"><label>Akwaria w rzędzie</label> <input type="number" id="tanksPerRow" value="6"></div>
+    <div class="input-group"><label>Ilość poziomów</label> <input type="number" id="rowCount" value="2"></div>
     <div class="input-group"><label>Grubość kantówki (mm)</label> <input type="number" id="beamSize" value="45"></div>
-    <div class="input-group"><label>Wysokość od ziemi (mm)</label> <input type="number" id="bottomClearance" value="150"></div>
-    <div class="input-group"><label>Luz całkowity (mm)</label> <input type="number" id="tolerance" value="20"></div>
+    <div class="input-group"><label>Wys. od ziemi (mm)</label> <input type="number" id="bottomClearance" value="150"></div>
+    <div class="input-group"><label>Luz całkowity (mm)</label> <input type="number" id="tolerance" value="30"></div>
     <div class="input-group">
-        <label>Gdzie więcej akwariów?</label>
+        <label>Preferowana strona</label>
         <select id="heavierSide">
-            <option value="left">Lewa strona</option>
-            <option value="right">Prawa strona</option>
+            <option value="left">Lewa dociążona</option>
+            <option value="right">Prawa dociążona</option>
         </select>
     </div>
-    <button onclick="uiController.update()">AKTUALIZUJ PROJEKT</button>
+    <button onclick="uiController.update()">GENERUJ PROJEKT</button>
     <div id="cuttingList" class="results-panel"></div>
 </div>
 
@@ -79,27 +79,34 @@
     class RackCalculator {
         constructor(p) {
             this.p = p;
-            // Jedyny słuszny warunek podziału: szerokość akwariów
-            this.isSplit = (p.tankL * p.tanksPerRow > 1100);
+            const totalTankL = p.tankL * p.tanksPerRow;
+            const maxBay = 1100; // Max rozpiętość przęsła
 
-            // Podział ilości sztuk
-            if (!this.isSplit) {
-                this.dist = { l: p.tanksPerRow, r: 0 };
-            } else {
-                const base = Math.floor(p.tanksPerRow / 2);
-                const extra = p.tanksPerRow % 2;
-                this.dist = p.heavierSide === 'left' ? { l: base + extra, r: base } : { l: base, r: base + extra };
-            }
+            // Obliczamy liczbę przęseł
+            this.bayCount = Math.ceil(totalTankL / maxBay);
+            if (this.bayCount < 1) this.bayCount = 1;
 
-            // Światło przęseł
-            const tolPerTank = p.tolerance / p.tanksPerRow;
-            this.bayWL = (this.dist.l * p.tankL) + (this.dist.l * tolPerTank);
-            this.bayWR = (this.isSplit) ? (this.dist.r * p.tankL) + (this.dist.r * tolPerTank) : 0;
+            // Dystrybucja akwariów
+            this.distribution = this.calculateDistribution(p.tanksPerRow, this.bayCount, p.heavierSide);
 
-            // Suma całkowita
-            const legsCount = this.isSplit ? 3 : 2;
-            this.totalW = this.bayWL + this.bayWR + (legsCount * p.beamSize);
+            // Szerokość każdego przęsła (światło)
+            const tolPerBay = p.tolerance / this.bayCount;
+            this.bayWidths = this.distribution.map(count => (count * p.tankL) + tolPerBay);
+
+            // Szerokość całkowita
+            this.totalW = this.bayWidths.reduce((a, b) => a + b, 0) + ((this.bayCount + 1) * p.beamSize);
             this.totalH = p.bottomClearance + (p.rowCount * (p.tankH + p.serviceGap + p.beamSize)) + p.beamSize;
+        }
+
+        calculateDistribution(total, bays, side) {
+            let dist = new Array(bays).fill(Math.floor(total / bays));
+            let rem = total % bays;
+            if (side === 'left') {
+                for (let i = 0; i < rem; i++) dist[i]++;
+            } else {
+                for (let i = bays - 1; i > bays - 1 - rem; i--) dist[i]++;
+            }
+            return dist;
         }
     }
 
@@ -108,7 +115,7 @@
             this.canvas = document.getElementById(canvasId);
             this.ctx = this.canvas.getContext('2d');
             this.scale = 0.5;
-            this.offX = 120;
+            this.offX = 100;
             this.offY = 80;
         }
 
@@ -118,7 +125,7 @@
             this.canvas.height = calc.totalH * s + 300;
             this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-            // 1. BELKI POZIOME
+            // 1. POZIOME
             this.ctx.fillStyle = "#8d6e63";
             const rowH = (p.tankH + p.serviceGap + p.beamSize);
             for (let i = 0; i <= p.rowCount; i++) {
@@ -130,32 +137,31 @@
             for (let i = 0; i < p.rowCount; i++) {
                 const shelfY = this.offY + (calc.totalH - p.bottomClearance - p.beamSize - (i * rowH)) * s;
                 const tankY = shelfY - (p.tankH * s);
-
-                this.drawInBay(this.offX + (p.beamSize * s), tankY, calc.dist.l, p, calc.bayWL);
-                if (calc.isSplit) {
-                    const startR = this.offX + (p.beamSize * s) + (calc.bayWL * s) + (p.beamSize * s);
-                    this.drawInBay(startR, tankY, calc.dist.r, p, calc.bayWR);
+                let curX = this.offX + (p.beamSize * s);
+                for (let b = 0; b < calc.bayCount; b++) {
+                    this.drawBay(curX, tankY, calc.distribution[b], p, calc.bayWidths[b]);
+                    curX += (calc.bayWidths[b] + p.beamSize) * s;
                 }
             }
 
             // 3. NOGI
             this.ctx.fillStyle = "#4a302a";
-            this.ctx.fillRect(this.offX, this.offY, p.beamSize * s, calc.totalH * s);
-            this.ctx.fillRect(this.offX + (calc.totalW - p.beamSize) * s, this.offY, p.beamSize * s, calc.totalH * s);
-            if (calc.isSplit) {
-                const midX = this.offX + (p.beamSize * s) + (calc.bayWL * s);
-                this.ctx.fillRect(midX, this.offY, p.beamSize * s, calc.totalH * s);
+            let legX = this.offX;
+            for (let b = 0; b <= calc.bayCount; b++) {
+                this.ctx.fillRect(legX, this.offY, p.beamSize * s, calc.totalH * s);
+                if (b < calc.bayCount) legX += (calc.bayWidths[b] + p.beamSize) * s;
             }
+
             this.drawAnnotations(calc);
         }
 
-        drawInBay(startX, y, count, p, bayW) {
+        drawBay(startX, y, count, p, bayW) {
             if (count === 0) return;
             const s = this.scale;
             const free = (bayW - (count * p.tankL)) * s;
-            const currentStart = startX + (free / 2);
+            const start = startX + (free / 2);
             for (let j = 0; j < count; j++) {
-                const ax = currentStart + (j * p.tankL * s);
+                const ax = start + (j * p.tankL * s);
                 this.ctx.fillStyle = "rgba(173, 216, 230, 0.7)";
                 this.ctx.strokeStyle = "#004488";
                 this.ctx.fillRect(ax + 2, y, (p.tankL * s) - 4, p.tankH * s);
@@ -166,14 +172,12 @@
         drawAnnotations(calc) {
             const s = this.scale; const p = calc.p;
             const yB = this.offY + (calc.totalH - p.bottomClearance - p.beamSize) * s;
-            this.drawArrow(this.offX - 80, this.offY, this.offX - 80, this.offY + calc.totalH * s, `${calc.totalH}mm`, "black");
+            this.drawArrow(this.offX - 70, this.offY, this.offX - 70, this.offY + calc.totalH * s, `${calc.totalH}mm`, "black");
             this.drawArrow(this.offX, this.offY + calc.totalH * s + 80, this.offX + calc.totalW * s, this.offY + calc.totalH * s + 80, `${calc.totalW}mm`, "black");
-
-            const lx1 = this.offX + (p.beamSize * s);
-            this.drawArrow(lx1, yB + 40*s, lx1 + calc.bayWL*s, yB + 40*s, `L: ${Math.round(calc.bayWL)}mm`, "brown");
-            if(calc.isSplit) {
-                const rx1 = lx1 + (calc.bayWL * s) + (p.beamSize * s);
-                this.drawArrow(rx1, yB + 40*s, rx1 + calc.bayWR*s, yB + 40*s, `P: ${Math.round(calc.bayWR)}mm`, "brown");
+            let curX = this.offX + (p.beamSize * s);
+            for (let b = 0; b < calc.bayCount; b++) {
+                this.drawArrow(curX, yB + 40*s, curX + calc.bayWidths[b]*s, yB + 40*s, `${Math.round(calc.bayWidths[b])}mm`, "brown");
+                curX += (calc.bayWidths[b] + p.beamSize) * s;
             }
         }
 
@@ -207,12 +211,13 @@
             const calc = new RackCalculator(p);
             const renderer = new RackRenderer('rackCanvas');
             renderer.render(calc);
-            const lCount = calc.isSplit ? 6 : 4;
+            const legPairs = calc.bayCount + 1;
             document.getElementById('cuttingList').innerHTML = `
             <strong>Lista Cięcia:</strong><br>
-            • Nogi (pion): ${lCount}x ${calc.totalH}mm<br>
+            • Liczba przęseł (Bays): ${calc.bayCount}<br>
+            • Nogi (pion): ${legPairs * 2}x ${calc.totalH}mm<br>
             • Belki front/tył: ${(p.rowCount + 1) * 2}x ${calc.totalW}mm<br>
-            • Poprzeczki: ${lCount/2 * (p.rowCount + 1)}x ${p.tankW + p.tolerance}mm
+            • Poprzeczki: ${legPairs * (p.rowCount + 1)}x ${p.tankW + p.tolerance}mm
         `;
         }
     };
