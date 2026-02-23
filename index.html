@@ -2,122 +2,103 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
-    <title>PROJEKT REGAŁU - DOKUMENTACJA WARSZTATOWA</title>
+    <title>PROJEKT REGAŁU - WIDOK XXL + WYMIARY</title>
     <style>
         :root { --primary-color: #2c3e50; --accent-color: #27ae60; --bg-color: #f4f7f6; }
         body { font-family: 'Segoe UI', sans-serif; display: flex; height: 100vh; margin: 0; background: var(--bg-color); }
 
-        /* SIDEBAR INTERFEJSU */
-        .sidebar {
-            background: white; padding: 25px; width: 400px; min-width: 400px;
-            box-shadow: 2px 0 15px rgba(0,0,0,0.1); height: 100vh; overflow-y: auto; box-sizing: border-box;
-        }
-        .main-view { flex-grow: 1; overflow-y: auto; padding: 20px; }
+        .sidebar { background: white; padding: 25px; width: 420px; min-width: 420px; box-shadow: 2px 0 15px rgba(0,0,0,0.1); height: 100vh; overflow-y: auto; box-sizing: border-box; z-index: 10; }
+        .main-view { flex-grow: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; align-items: center; }
 
-        /* STRONY WYDRUKU */
-        .print-page {
-            background: white; width: 210mm; margin: 0 auto 30px auto; padding: 15mm;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1); box-sizing: border-box; page-break-after: always;
+        .canvas-container {
+            width: 100%;
+            max-height: 75vh;
+            overflow: auto;
+            background: #eee;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+            padding: 20px;
+            box-sizing: border-box;
+            margin-bottom: 30px;
         }
-        /* Pierwsza strona to teraz Landscape dla regału */
-        .page-main-view { width: 297mm; }
 
-        .header { border-bottom: 3px solid var(--primary-color); padding-bottom: 10px; margin-bottom: 15px; text-align: center; }
-        .section-title { background: #eee; padding: 6px 12px; font-weight: bold; border-left: 5px solid var(--accent-color); margin: 15px 0; }
+        .print-page { background: white; width: 210mm; margin: 0 auto 30px auto; padding: 15mm; box-shadow: 0 0 10px rgba(0,0,0,0.1); box-sizing: border-box; }
+        .page-landscape { width: 297mm; }
+
+        .header { border-bottom: 3px solid var(--primary-color); padding-bottom: 10px; margin-bottom: 20px; text-align: center; }
+        .section-title { background: #eee; padding: 8px; font-weight: bold; border-left: 5px solid var(--accent-color); margin-bottom: 15px; }
 
         .input-group { margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
-        input { width: 80px; padding: 5px; border: 1px solid #ccc; border-radius: 4px; }
+        input, select { width: 110px; padding: 5px; border: 1px solid #ccc; border-radius: 4px; }
         button { width: 100%; padding: 15px; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; margin-top: 10px; }
         .btn-update { background: var(--accent-color); }
         .btn-print { background: #34495e; }
 
-        canvas { display: block; margin: 0 auto; background: white; max-width: 100%; }
+        canvas { display: block; margin: 0 auto; background: white; }
         .important { color: #d35400; font-weight: 800; }
-
-        /* TABELA LISTY CIĘCIA */
-        .cut-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        .cut-table th, .cut-table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        .cut-table th { background: #f8f9fa; }
 
         @media print {
             body { background: white; display: block; overflow: visible; }
             .sidebar { display: none !important; }
             .main-view { padding: 0; overflow: visible; width: 100%; }
-            .print-page { box-shadow: none; margin: 0; border: none; width: 100% !important; padding: 10mm; height: auto; }
-
-            /* Strona 1: Pozioma */
-            @page { size: portrait; margin: 10mm; }
-            .page-main-view { page-break-after: always; }
-            /* Specyficzne wymuszenie landscape dla strony z regałem w Chrome/Edge */
-            @page { size: auto; }
+            .canvas-container { overflow: visible; max-height: none; background: white; border: none; padding: 0; width: 100% !important; margin: 0; }
+            .print-page { box-shadow: none; margin: 0; border: none; width: 100% !important; page-break-after: always; padding: 10mm; height: auto; }
+            .page-landscape { width: 100%; }
+            canvas { width: 100% !important; height: auto !important; max-width: 100% !important; }
+            @page { margin: 1cm; size: portrait; }
+            .page-landscape { page-break-before: always; }
         }
     </style>
 </head>
 <body>
 
 <div class="sidebar">
-    <h3 style="margin-top:0">⚙️ PARAMETRY</h3>
+    <h2 style="margin-top:0">⚙️ KONFIGURACJA</h2>
     <div class="input-group"><label>Dł. akwarium (mm)</label> <input type="number" id="tankL" value="400"></div>
-    <div class="input-group"><label>Akwaria w rzędzie</label> <input type="number" id="tanksPerRow" value="11"></div>
-    <div class="input-group"><label>Ilość poziomów</label> <input type="number" id="rowCount" value="2"></div>
     <div class="input-group"><label>Szer. akwarium (mm)</label> <input type="number" id="tankW" value="400"></div>
     <div class="input-group"><label>Wys. akwarium (mm)</label> <input type="number" id="tankH" value="400"></div>
     <div class="input-group"><label>Prześwit serwis (mm)</label> <input type="number" id="gap" value="200"></div>
+    <div class="input-group"><label>Akwaria w rzędzie</label> <input type="number" id="tanksPerRow" value="11"></div>
+    <div class="input-group"><label>Ilość poziomów</label> <input type="number" id="rowCount" value="2"></div>
     <div class="input-group"><label>Kantówka (mm)</label> <input type="number" id="beamSize" value="45"></div>
     <div class="input-group"><label>Luz (mm)</label> <input type="number" id="tolerance" value="30"></div>
     <div class="input-group"><label>Max rozpiętość (mm)</label> <input type="number" id="maxSpan" value="1000"></div>
 
-    <button class="btn-update" onclick="uiController.update()">AKTUALIZUJ PROJEKT</button>
+    <div class="input-group">
+        <label>Gdzie więcej akwariów?</label>
+        <select id="heavierSide">
+            <option value="left">Lewa strona</option>
+            <option value="right">Prawa strona</option>
+        </select>
+    </div>
+
+    <button class="btn-update" onclick="uiController.update()">PRZELICZ I ODSWIEŻ</button>
     <button class="btn-print" onclick="window.print()">🖨️ DRUKUJ DOKUMENTACJĘ</button>
 </div>
 
 <div class="main-view">
-    <div class="print-page page-main-view">
+    <div class="print-page page-landscape">
         <div class="header">
-            <h1 style="margin:0">ARKUSZ 1: WIDOK FRONTOWY I LISTA ELEMENTÓW</h1>
-            <p id="totalDimsTitle" style="font-size: 18px; font-weight: bold; color: #d35400; margin: 5px 0;"></p>
+            <h1>ARKUSZ 1: WIDOK FRONTOWY REGAŁU</h1>
+            <p id="totalDimsHeader" style="font-size: 20px; font-weight: bold; color: #d35400; margin-top: 5px;"></p>
         </div>
-
-        <canvas id="rackCanvas"></canvas>
-
-        <div class="section">
-            <div class="section-title">📦 ZESTAWIENIE MATERIAŁÓW (LISTA CIĘCIA)</div>
-            <table class="cut-table">
-                <thead>
-                <tr><th>Element</th><th>Ilość</th><th>Długość [mm]</th><th>Opis konstrukcyjny</th></tr>
-                </thead>
-                <tbody id="cuttingTableBody"></tbody>
-            </table>
+        <div class="canvas-container">
+            <canvas id="rackCanvas"></canvas>
         </div>
     </div>
 
     <div class="print-page">
-        <div class="header">
-            <h1 style="margin:0">ARKUSZ 2: SCHEMATY I MONTAŻ</h1>
-        </div>
+        <div class="header"><h1>ARKUSZ 2: LISTA MATERIAŁÓW</h1></div>
+        <div id="cuttingListContent" style="font-size: 20px; line-height: 2.5;"></div>
+    </div>
 
-        <div class="section">
-            <div class="section-title">RZUT Z BOKU (PRZEKRÓJ)</div>
-            <canvas id="sideViewCanvas"></canvas>
-            <div style="display: flex; gap: 20px; justify-content: center; margin-top: 10px; font-size: 14px;">
-                <span><b style="color:#4a302a">■</b> Nogi</span>
-                <span><b style="color:#d35400">■</b> Poprzeczki</span>
-                <span><b style="color:#8d6e63">■</b> Belki nośne</span>
-            </div>
-        </div>
-
-        <div class="section">
-            <div class="section-title">RZUT Z GÓRY</div>
-            <canvas id="topViewCanvas"></canvas>
-        </div>
-
-        <div class="section">
-            <div class="section-title">UWAGI TECHNICZNE</div>
-            <ul style="font-size: 14px; line-height: 1.6;">
-                <li>Zalecane łączenie: wkręty ciesielskie min. 6x100mm.</li>
-                <li>Belki podłużne (jasny brąz) powinny być mocowane na zewnątrz nóg.</li>
-                <li>Poprzeczki (pomarańczowe) montowane między nogą przednią a tylną.</li>
-            </ul>
+    <div class="print-page">
+        <div class="header"><h1>ARKUSZ 3: LOGIKA KONSTRUKCJI</h1></div>
+        <div class="section" style="font-size: 16px;">
+            <div class="section-title">SYSTEM MONTAŻOWY (DRABINOWY)</div>
+            <p>1. <b>Drabiny:</b> Skręć pionowe nogi z poprzeczkami głębokości (pomarańczowe).</p>
+            <p>2. <b>Nośność:</b> Długie belki (jasny brąz) kładziesz na poprzeczkach drabin.</p>
+            <p>3. <b>Stabilność:</b> Skręcasz belki z poprzeczkami wkrętami od góry.</p>
         </div>
     </div>
 </div>
@@ -130,7 +111,7 @@
                 tankH: +document.getElementById('tankH').value, rowCount: +document.getElementById('rowCount').value,
                 tanksPerRow: +document.getElementById('tanksPerRow').value, beamSize: +document.getElementById('beamSize').value,
                 tolerance: +document.getElementById('tolerance').value, maxSpan: +document.getElementById('maxSpan').value,
-                gap: +document.getElementById('gap').value
+                gap: +document.getElementById('gap').value, heavierSide: document.getElementById('heavierSide').value
             };
 
             const tankSpace = p.tankL + (p.tolerance / p.tanksPerRow);
@@ -138,61 +119,63 @@
             let dist = [], rem = p.tanksPerRow;
             while (rem > 0) { let take = Math.min(rem, maxInBay); dist.push(take); rem -= take; }
 
+            if (p.heavierSide === 'right') dist.reverse();
+
             const bayWidths = dist.map(count => (count * p.tankL) + (count * (p.tolerance / p.tanksPerRow)));
             const totalW = bayWidths.reduce((a, b) => a + b, 0) + ((dist.length + 1) * p.beamSize);
             const totalH = 150 + (p.rowCount * (p.tankH + p.gap + p.beamSize)) + p.beamSize;
 
             const calc = { p, dist, bayWidths, totalW, totalH, bayCount: dist.length, levels: p.rowCount + 1 };
-
             this.render(calc);
         },
 
         render(calc) {
-            document.getElementById('totalDimsTitle').innerText = `WYMIAR CAŁKOWITY: ${Math.round(calc.totalW)} x ${Math.round(calc.totalH)} x ${calc.p.tankW + calc.p.tolerance} mm`;
+            const pairCount = calc.bayCount + 1;
+            const levels = calc.levels;
+            const totalDepth = calc.p.tankW + calc.p.tolerance;
 
-            const legQty = (calc.bayCount + 1) * 2;
-            const longQty = calc.levels * 2;
-            const shortQty = (calc.bayCount + 1) * calc.levels;
+            // NAGŁÓWEK NA STRONIE 1
+            document.getElementById('totalDimsHeader').innerText = `WYMIAR: ${Math.round(calc.totalW)} x ${Math.round(calc.totalH)} x ${totalDepth} mm`;
 
-            document.getElementById('cuttingTableBody').innerHTML = `
-            <tr><td>Nogi (Pion)</td><td>${legQty} szt.</td><td><b class="important">${Math.round(calc.totalH)}</b></td><td>Główne słupy pionowe przód/tył</td></tr>
-            <tr><td>Belki podłużne</td><td>${longQty} szt.</td><td><b class="important">${Math.round(calc.totalW)}</b></td><td>Poziome podparcie akwariów (front/tył)</td></tr>
-            <tr><td>Poprzeczki</td><td>${shortQty} szt.</td><td><b class="important">${calc.p.tankW + calc.p.tolerance}</b></td><td>Łączniki głębokości (między nogami)</td></tr>
+            // LISTA NA STRONIE 2
+            document.getElementById('cuttingListContent').innerHTML = `
+            • <strong>Nogi (Pion):</strong> ${pairCount * 2} szt. x <span class="important">${Math.round(calc.totalH)}mm</span><br>
+            • <strong>Belki podłużne (Front/Tył):</strong> ${levels * 2} szt. x <span class="important">${Math.round(calc.totalW)}mm</span><br>
+            • <strong>Poprzeczki (Głębokość):</strong> ${pairCount * levels} szt. x <span class="important">${totalDepth}mm</span><br>
+            <hr>
+            <strong>Gabaryt całkowity:</strong> ${Math.round(calc.totalW)} x ${Math.round(calc.totalH)} mm
         `;
-
             this.drawFront(calc);
-            this.drawSide(calc);
-            this.drawTop(calc);
         },
 
-        drawArrow(ctx, x1, y1, x2, y2, label, color) {
-            const head = 10; const angle = Math.atan2(y2 - y1, x2 - x1);
-            ctx.save(); ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = 1.5;
+        drawArrow(ctx, x1, y1, x2, y2, label, color, labelInside = false) {
+            const head = 12; const angle = Math.atan2(y2 - y1, x2 - x1);
+            ctx.save(); ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = 2;
             ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
             const dh = (tx, ty, a) => {
                 ctx.beginPath(); ctx.moveTo(tx, ty);
-                ctx.lineTo(tx - head * Math.cos(a - 0.5), ty - head * Math.sin(a - 0.5));
-                ctx.lineTo(tx - head * Math.cos(a + 0.5), ty - head * Math.sin(a + 0.5));
+                ctx.lineTo(tx - head * Math.cos(a - 0.4), ty - head * Math.sin(a - 0.4));
+                ctx.lineTo(tx - head * Math.cos(a + 0.4), ty - head * Math.sin(a + 0.4));
                 ctx.fill();
             };
             dh(x2, y2, angle); dh(x1, y1, angle + Math.PI);
-            ctx.fillStyle = (color === "white") ? "white" : "black";
-            ctx.font = "bold 11px Arial"; ctx.textAlign = "center";
+            ctx.fillStyle = labelInside ? "white" : "black";
+            ctx.font = "bold 15px Arial"; ctx.textAlign = "center";
             const mx = (x1 + x2) / 2; const my = (y1 + y2) / 2;
             ctx.save(); ctx.translate(mx, my); if(Math.abs(x1-x2)<2) ctx.rotate(-Math.PI/2);
-            ctx.fillText(label, 0, (color === "white") ? 4 : -8); ctx.restore(); ctx.restore();
+            ctx.fillText(label, 0, labelInside ? 5 : -12); ctx.restore(); ctx.restore();
         },
 
         drawFront(calc) {
             const cvs = document.getElementById('rackCanvas');
             const ctx = cvs.getContext('2d');
-            const s = 0.5;
-            cvs.width = calc.totalW * s + 200;
-            cvs.height = calc.totalH * s + 200;
+            const s = 1.0;
+            cvs.width = calc.totalW * s + 300;
+            cvs.height = calc.totalH * s + 300;
             ctx.clearRect(0,0, cvs.width, cvs.height);
-            const ox = 100, oy = 50;
+            const ox = 150, oy = 100;
 
-            ctx.fillStyle = "#8d6e63"; // Beams
+            ctx.fillStyle = "#8d6e63";
             const rowStep = (calc.p.tankH + calc.p.gap + calc.p.beamSize);
             for (let i = 0; i < calc.levels; i++) {
                 const y = oy + (calc.totalH - 150 - calc.p.beamSize - (i * rowStep)) * s;
@@ -211,58 +194,22 @@
                         ctx.fillRect(startA + (j * calc.p.tankL * s) + 2, yBase - calc.p.tankH * s, calc.p.tankL * s - 4, calc.p.tankH * s);
                         ctx.strokeRect(startA + (j * calc.p.tankL * s) + 2, yBase - calc.p.tankH * s, calc.p.tankL * s - 4, calc.p.tankH * s);
                     }
-                    this.drawArrow(ctx, cx, yBase + 10, cx + bw, yBase + 10, `${Math.round(calc.bayWidths[b])}`, "white");
-                    this.drawArrow(ctx, cx + 15, yBase, cx + 15, yBase - calc.p.tankH * s, `${calc.p.tankH}`, "blue");
-                    this.drawArrow(ctx, cx + 15, yBase - calc.p.tankH * s, cx + 15, yBase - rowStep * s + calc.p.beamSize * s, `${calc.p.gap}`, "green");
+                    this.drawArrow(ctx, cx, yBase + (calc.p.beamSize*s/2), cx + bw, yBase + (calc.p.beamSize*s/2), `${Math.round(calc.bayWidths[b])}`, "white", true);
+                    this.drawArrow(ctx, cx + 25, yBase, cx + 25, yBase - calc.p.tankH * s, `${calc.p.tankH}`, "blue");
+                    this.drawArrow(ctx, cx + 25, yBase - calc.p.tankH * s, cx + 25, yBase - rowStep*s + calc.p.beamSize*s, `${calc.p.gap}`, "green");
                     cx += bw + (calc.p.beamSize * s);
                 }
             }
-            ctx.fillStyle = "#4a302a"; // Legs
+            ctx.fillStyle = "#4a302a";
             let lx = ox;
             for (let b = 0; b <= calc.bayCount; b++) {
                 ctx.fillRect(lx, oy, calc.p.beamSize * s, calc.totalH * s);
                 lx += (calc.bayWidths[b] || 0) * s + (calc.p.beamSize * s);
             }
-        },
-
-        drawSide(calc) {
-            const cvs = document.getElementById('sideViewCanvas');
-            const ctx = cvs.getContext('2d');
-            const s = 0.8; const depth = calc.p.tankW + calc.p.tolerance;
-            cvs.width = 400; cvs.height = 350;
-            const ox = 100, oy = 40;
-
-            ctx.fillStyle = "#4a302a"; // Legs
-            ctx.fillRect(ox, oy, calc.p.beamSize*s, 280);
-            ctx.fillRect(ox + depth*s + calc.p.beamSize*s, oy, calc.p.beamSize*s, 280);
-
-            ctx.fillStyle = "#d35400"; // Poprzeczki
-            for(let i=0; i<3; i++) ctx.fillRect(ox + calc.p.beamSize*s, oy + 40 + i*90, depth*s, calc.p.beamSize*s);
-
-            ctx.fillStyle = "#8d6e63"; // Beams end-view
-            for(let i=0; i<3; i++) {
-                ctx.fillRect(ox - 15, oy + 40 + i*90, 15, calc.p.beamSize*s);
-                ctx.fillRect(ox + depth*s + calc.p.beamSize*2*s, oy + 40 + i*90, 15, calc.p.beamSize*s);
-            }
-            this.drawArrow(ctx, ox + calc.p.beamSize*s, oy + 20, ox + (calc.p.beamSize + depth)*s, oy + 20, `${depth}mm`, "black");
-        },
-
-        drawTop(calc) {
-            const cvs = document.getElementById('topViewCanvas');
-            const ctx = cvs.getContext('2d');
-            const s = 0.6; const depth = calc.p.tankW + calc.p.tolerance;
-            cvs.width = 400; cvs.height = 200;
-            const ox = 50, oy = 40;
-
-            ctx.fillStyle = "#8d6e63";
-            ctx.fillRect(ox, oy, 250, calc.p.beamSize*s);
-            ctx.fillRect(ox, oy + depth*s, 250, calc.p.beamSize*s);
-            ctx.fillStyle = "#d35400";
-            ctx.fillRect(ox + 20, oy + calc.p.beamSize*s, calc.p.beamSize*s, (depth - calc.p.beamSize)*s);
-            ctx.fillRect(ox + 200, oy + calc.p.beamSize*s, calc.p.beamSize*s, (depth - calc.p.beamSize)*s);
+            this.drawArrow(ctx, ox - 100, oy, ox - 100, oy + calc.totalH * s, `${Math.round(calc.totalH)}`, "black");
+            this.drawArrow(ctx, ox, oy + calc.totalH * s + 120, ox + calc.totalW * s, oy + calc.totalH * s + 120, `${Math.round(calc.totalW)}`, "black");
         }
     };
-
     window.onload = () => uiController.update();
 </script>
 </body>
