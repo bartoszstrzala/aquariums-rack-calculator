@@ -2,157 +2,171 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
-    <title>Projektant Regału - Ciasne Przęsła</title>
+    <title>PROJEKT REGAŁU - DOKUMENTACJA WARSZTATOWA</title>
     <style>
         :root { --primary-color: #2c3e50; --accent-color: #27ae60; --bg-color: #f4f7f6; }
-        body { font-family: 'Segoe UI', sans-serif; display: flex; height: 100vh; margin: 0; background: var(--bg-color); color: var(--primary-color); overflow: hidden; }
-        .sidebar { background: white; padding: 25px; width: 420px; min-width: 420px; box-shadow: 2px 0 15px rgba(0,0,0,0.1); height: 100vh; overflow-y: auto; box-sizing: border-box; z-index: 10; }
-        .main-view { flex-grow: 1; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-        .canvas-wrapper { flex-grow: 1; overflow: auto; background: #eee; padding: 80px; display: flex; justify-content: flex-start; align-items: flex-start; }
-        .input-group { margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
-        label { font-size: 13px; font-weight: 600; flex-grow: 1; }
-        input, select { width: 90px; padding: 7px; border: 1px solid #dcdde1; border-radius: 4px; }
-        .results-panel { margin-top: 15px; padding: 15px; background: #f8f9fa; border-left: 4px solid var(--accent-color); font-size: 14px; }
-        button { width: 100%; padding: 15px; background: var(--accent-color); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 16px; margin-top: 10px; }
-        canvas { background: white; box-shadow: 0 4px 20px rgba(0,0,0,0.1); flex-shrink: 0; }
+        body { font-family: 'Segoe UI', sans-serif; display: flex; height: 100vh; margin: 0; background: var(--bg-color); }
+
+        /* SIDEBAR INTERFEJSU */
+        .sidebar {
+            background: white; padding: 25px; width: 400px; min-width: 400px;
+            box-shadow: 2px 0 15px rgba(0,0,0,0.1); height: 100vh; overflow-y: auto; box-sizing: border-box;
+        }
+        .main-view { flex-grow: 1; overflow-y: auto; padding: 20px; }
+
+        /* STRONY WYDRUKU */
+        .print-page {
+            background: white; width: 210mm; margin: 0 auto 30px auto; padding: 15mm;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1); box-sizing: border-box; page-break-after: always;
+        }
+        /* Pierwsza strona to teraz Landscape dla regału */
+        .page-main-view { width: 297mm; }
+
+        .header { border-bottom: 3px solid var(--primary-color); padding-bottom: 10px; margin-bottom: 15px; text-align: center; }
+        .section-title { background: #eee; padding: 6px 12px; font-weight: bold; border-left: 5px solid var(--accent-color); margin: 15px 0; }
+
+        .input-group { margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        input { width: 80px; padding: 5px; border: 1px solid #ccc; border-radius: 4px; }
+        button { width: 100%; padding: 15px; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; margin-top: 10px; }
+        .btn-update { background: var(--accent-color); }
+        .btn-print { background: #34495e; }
+
+        canvas { display: block; margin: 0 auto; background: white; max-width: 100%; }
+        .important { color: #d35400; font-weight: 800; }
+
+        /* TABELA LISTY CIĘCIA */
+        .cut-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .cut-table th, .cut-table td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        .cut-table th { background: #f8f9fa; }
+
+        @media print {
+            body { background: white; display: block; overflow: visible; }
+            .sidebar { display: none !important; }
+            .main-view { padding: 0; overflow: visible; width: 100%; }
+            .print-page { box-shadow: none; margin: 0; border: none; width: 100% !important; padding: 10mm; height: auto; }
+
+            /* Strona 1: Pozioma */
+            @page { size: portrait; margin: 10mm; }
+            .page-main-view { page-break-after: always; }
+            /* Specyficzne wymuszenie landscape dla strony z regałem w Chrome/Edge */
+            @page { size: auto; }
+        }
     </style>
 </head>
 <body>
 
 <div class="sidebar">
-    <h3>Ustawienia Projektu</h3>
+    <h3 style="margin-top:0">⚙️ PARAMETRY</h3>
     <div class="input-group"><label>Dł. akwarium (mm)</label> <input type="number" id="tankL" value="400"></div>
+    <div class="input-group"><label>Akwaria w rzędzie</label> <input type="number" id="tanksPerRow" value="11"></div>
+    <div class="input-group"><label>Ilość poziomów</label> <input type="number" id="rowCount" value="2"></div>
     <div class="input-group"><label>Szer. akwarium (mm)</label> <input type="number" id="tankW" value="400"></div>
     <div class="input-group"><label>Wys. akwarium (mm)</label> <input type="number" id="tankH" value="400"></div>
     <div class="input-group"><label>Prześwit serwis (mm)</label> <input type="number" id="gap" value="200"></div>
-    <div class="input-group"><label>Akwaria w rzędzie</label> <input type="number" id="tanksPerRow" value="11"></div>
-    <div class="input-group"><label>Ilość poziomów</label> <input type="number" id="rowCount" value="2"></div>
-    <div class="input-group"><label>Grubość kantówki (mm)</label> <input type="number" id="beamSize" value="45"></div>
-    <div class="input-group"><label>Wys. od ziemi (mm)</label> <input type="number" id="bottomClearance" value="150"></div>
-    <div class="input-group"><label>Luz całkowity (mm)</label> <input type="number" id="tolerance" value="30"></div>
-    <div class="input-group" style="background: #e8f5e9; padding: 5px; border-radius: 4px;">
-        <label>Max rozpiętość przęsła (mm)</label> <input type="number" id="maxSpan" value="1000">
-    </div>
-    <div class="input-group">
-        <label>Strona dociążona</label>
-        <select id="heavierSide"><option value="left">Lewa</option><option value="right">Prawa</option></select>
-    </div>
-    <button onclick="uiController.update()">GENERUJ PROJEKT</button>
-    <div id="cuttingList" class="results-panel"></div>
+    <div class="input-group"><label>Kantówka (mm)</label> <input type="number" id="beamSize" value="45"></div>
+    <div class="input-group"><label>Luz (mm)</label> <input type="number" id="tolerance" value="30"></div>
+    <div class="input-group"><label>Max rozpiętość (mm)</label> <input type="number" id="maxSpan" value="1000"></div>
+
+    <button class="btn-update" onclick="uiController.update()">AKTUALIZUJ PROJEKT</button>
+    <button class="btn-print" onclick="window.print()">🖨️ DRUKUJ DOKUMENTACJĘ</button>
 </div>
 
 <div class="main-view">
-    <div class="canvas-wrapper"><canvas id="rackCanvas"></canvas></div>
+    <div class="print-page page-main-view">
+        <div class="header">
+            <h1 style="margin:0">ARKUSZ 1: WIDOK FRONTOWY I LISTA ELEMENTÓW</h1>
+            <p id="totalDimsTitle" style="font-size: 18px; font-weight: bold; color: #d35400; margin: 5px 0;"></p>
+        </div>
+
+        <canvas id="rackCanvas"></canvas>
+
+        <div class="section">
+            <div class="section-title">📦 ZESTAWIENIE MATERIAŁÓW (LISTA CIĘCIA)</div>
+            <table class="cut-table">
+                <thead>
+                <tr><th>Element</th><th>Ilość</th><th>Długość [mm]</th><th>Opis konstrukcyjny</th></tr>
+                </thead>
+                <tbody id="cuttingTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="print-page">
+        <div class="header">
+            <h1 style="margin:0">ARKUSZ 2: SCHEMATY I MONTAŻ</h1>
+        </div>
+
+        <div class="section">
+            <div class="section-title">RZUT Z BOKU (PRZEKRÓJ)</div>
+            <canvas id="sideViewCanvas"></canvas>
+            <div style="display: flex; gap: 20px; justify-content: center; margin-top: 10px; font-size: 14px;">
+                <span><b style="color:#4a302a">■</b> Nogi</span>
+                <span><b style="color:#d35400">■</b> Poprzeczki</span>
+                <span><b style="color:#8d6e63">■</b> Belki nośne</span>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">RZUT Z GÓRY</div>
+            <canvas id="topViewCanvas"></canvas>
+        </div>
+
+        <div class="section">
+            <div class="section-title">UWAGI TECHNICZNE</div>
+            <ul style="font-size: 14px; line-height: 1.6;">
+                <li>Zalecane łączenie: wkręty ciesielskie min. 6x100mm.</li>
+                <li>Belki podłużne (jasny brąz) powinny być mocowane na zewnątrz nóg.</li>
+                <li>Poprzeczki (pomarańczowe) montowane między nogą przednią a tylną.</li>
+            </ul>
+        </div>
+    </div>
 </div>
 
 <script>
-    class RackCalculator {
-        constructor(p) {
-            this.p = p;
-            const tolPerTank = p.tolerance / p.tanksPerRow;
-            const tankEffectiveL = p.tankL + tolPerTank;
+    const uiController = {
+        update() {
+            const p = {
+                tankL: +document.getElementById('tankL').value, tankW: +document.getElementById('tankW').value,
+                tankH: +document.getElementById('tankH').value, rowCount: +document.getElementById('rowCount').value,
+                tanksPerRow: +document.getElementById('tanksPerRow').value, beamSize: +document.getElementById('beamSize').value,
+                tolerance: +document.getElementById('tolerance').value, maxSpan: +document.getElementById('maxSpan').value,
+                gap: +document.getElementById('gap').value
+            };
 
-            // 1. Ile akwariów mieści się w jednym przęśle bez przebicia maxSpan?
-            let maxTanksPerBay = Math.floor(p.maxSpan / tankEffectiveL);
-            if (maxTanksPerBay < 1) maxTanksPerBay = 1;
+            const tankSpace = p.tankL + (p.tolerance / p.tanksPerRow);
+            const maxInBay = Math.floor(p.maxSpan / tankSpace) || 1;
+            let dist = [], rem = p.tanksPerRow;
+            while (rem > 0) { let take = Math.min(rem, maxInBay); dist.push(take); rem -= take; }
 
-            // 2. Budujemy dystrybucję (upakowanie od wybranej strony)
-            this.distribution = [];
-            let remainingTanks = p.tanksPerRow;
+            const bayWidths = dist.map(count => (count * p.tankL) + (count * (p.tolerance / p.tanksPerRow)));
+            const totalW = bayWidths.reduce((a, b) => a + b, 0) + ((dist.length + 1) * p.beamSize);
+            const totalH = 150 + (p.rowCount * (p.tankH + p.gap + p.beamSize)) + p.beamSize;
 
-            while (remainingTanks > 0) {
-                let tanksInThisBay = Math.min(remainingTanks, maxTanksPerBay);
-                this.distribution.push(tanksInThisBay);
-                remainingTanks -= tanksInThisBay;
-            }
+            const calc = { p, dist, bayWidths, totalW, totalH, bayCount: dist.length, levels: p.rowCount + 1 };
 
-            if (p.heavierSide === 'right') this.distribution.reverse();
-
-            this.bayCount = this.distribution.length;
-
-            // 3. Szerokości przęseł - każde przęsło bierze luz proporcjonalnie do ilości akwariów
-            this.bayWidths = this.distribution.map(count => (count * p.tankL) + (count * tolPerTank));
-
-            this.totalW = this.bayWidths.reduce((a, b) => a + b, 0) + ((this.bayCount + 1) * p.beamSize);
-            this.totalH = p.bottomClearance + (p.rowCount * (p.tankH + p.serviceGap + p.beamSize)) + p.beamSize;
-        }
-    }
-
-    class RackRenderer {
-        constructor(canvasId) {
-            this.canvas = document.getElementById(canvasId);
-            this.ctx = this.canvas.getContext('2d');
-            this.scale = 0.5;
-            this.offX = 100;
-            this.offY = 80;
-        }
+            this.render(calc);
+        },
 
         render(calc) {
-            const p = calc.p; const s = this.scale;
-            this.canvas.width = calc.totalW * s + 300;
-            this.canvas.height = calc.totalH * s + 300;
-            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+            document.getElementById('totalDimsTitle').innerText = `WYMIAR CAŁKOWITY: ${Math.round(calc.totalW)} x ${Math.round(calc.totalH)} x ${calc.p.tankW + calc.p.tolerance} mm`;
 
-            this.ctx.fillStyle = "#8d6e63";
-            const rowH = (p.tankH + p.serviceGap + p.beamSize);
-            for (let i = 0; i <= p.rowCount; i++) {
-                const y = this.offY + (calc.totalH - p.bottomClearance - p.beamSize - (i * rowH)) * s;
-                this.ctx.fillRect(this.offX, y, calc.totalW * s, p.beamSize * s);
-            }
+            const legQty = (calc.bayCount + 1) * 2;
+            const longQty = calc.levels * 2;
+            const shortQty = (calc.bayCount + 1) * calc.levels;
 
-            for (let i = 0; i < p.rowCount; i++) {
-                const shelfY = this.offY + (calc.totalH - p.bottomClearance - p.beamSize - (i * rowH)) * s;
-                const tankY = shelfY - (p.tankH * s);
-                let curX = this.offX + (p.beamSize * s);
-                for (let b = 0; b < calc.bayCount; b++) {
-                    this.drawBay(curX, tankY, calc.distribution[b], p, calc.bayWidths[b]);
-                    curX += (calc.bayWidths[b] + p.beamSize) * s;
-                }
-            }
+            document.getElementById('cuttingTableBody').innerHTML = `
+            <tr><td>Nogi (Pion)</td><td>${legQty} szt.</td><td><b class="important">${Math.round(calc.totalH)}</b></td><td>Główne słupy pionowe przód/tył</td></tr>
+            <tr><td>Belki podłużne</td><td>${longQty} szt.</td><td><b class="important">${Math.round(calc.totalW)}</b></td><td>Poziome podparcie akwariów (front/tył)</td></tr>
+            <tr><td>Poprzeczki</td><td>${shortQty} szt.</td><td><b class="important">${calc.p.tankW + calc.p.tolerance}</b></td><td>Łączniki głębokości (między nogami)</td></tr>
+        `;
 
-            this.ctx.fillStyle = "#4a302a";
-            let legX = this.offX;
-            for (let b = 0; b <= calc.bayCount; b++) {
-                this.ctx.fillRect(legX, this.offY, p.beamSize * s, calc.totalH * s);
-                if (b < calc.bayCount) legX += (calc.bayWidths[b] + p.beamSize) * s;
-            }
+            this.drawFront(calc);
+            this.drawSide(calc);
+            this.drawTop(calc);
+        },
 
-            this.drawAnnotations(calc);
-        }
-
-        drawBay(startX, y, count, p, bayW) {
-            if (count === 0) return;
-            const s = this.scale;
-            const free = (bayW - (count * p.tankL)) * s;
-            const start = startX + (free / 2);
-            for (let j = 0; j < count; j++) {
-                const ax = start + (j * p.tankL * s);
-                this.ctx.fillStyle = "rgba(173, 216, 230, 0.7)";
-                this.ctx.strokeStyle = "#004488";
-                this.ctx.fillRect(ax + 2, y, (p.tankL * s) - 4, p.tankH * s);
-                this.ctx.strokeRect(ax + 2, y, (p.tankL * s) - 4, p.tankH * s);
-            }
-        }
-
-        drawAnnotations(calc) {
-            const s = this.scale; const p = calc.p;
-            const yB = this.offY + (calc.totalH - p.bottomClearance - p.beamSize) * s;
-            this.drawArrow(this.offX - 70, this.offY, this.offX - 70, this.offY + calc.totalH * s, `${calc.totalH}mm`, "black");
-            this.drawArrow(this.offX, this.offY + calc.totalH * s + 80, this.offX + calc.totalW * s, this.offY + calc.totalH * s + 80, `${calc.totalW}mm`, "black");
-
-            const dimX = this.offX + (p.beamSize * s) + (calc.bayWidths[0] * s / 8);
-            this.drawArrow(dimX, yB, dimX, yB - p.tankH * s, `${p.tankH}`, "blue");
-            this.drawArrow(dimX, yB - p.tankH * s, dimX, yB - p.tankH * s - p.serviceGap * s, `${p.gap}`, "green");
-
-            let curX = this.offX + (p.beamSize * s);
-            for (let b = 0; b < calc.bayCount; b++) {
-                this.drawArrow(curX, yB + 40*s, curX + calc.bayWidths[b]*s, yB + 40*s, `${Math.round(calc.bayWidths[b])}mm`, "brown");
-                curX += (calc.bayWidths[b] + p.beamSize) * s;
-            }
-        }
-
-        drawArrow(x1, y1, x2, y2, label, color) {
-            const ctx = this.ctx; const head = 10; const angle = Math.atan2(y2 - y1, x2 - x1);
+        drawArrow(ctx, x1, y1, x2, y2, label, color) {
+            const head = 10; const angle = Math.atan2(y2 - y1, x2 - x1);
             ctx.save(); ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = 1.5;
             ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
             const dh = (tx, ty, a) => {
@@ -162,35 +176,93 @@
                 ctx.fill();
             };
             dh(x2, y2, angle); dh(x1, y1, angle + Math.PI);
-            ctx.fillStyle = "black"; ctx.font = "bold 12px Arial"; ctx.textAlign = "center";
+            ctx.fillStyle = (color === "white") ? "white" : "black";
+            ctx.font = "bold 11px Arial"; ctx.textAlign = "center";
             const mx = (x1 + x2) / 2; const my = (y1 + y2) / 2;
             ctx.save(); ctx.translate(mx, my); if(Math.abs(x1-x2)<2) ctx.rotate(-Math.PI/2);
-            ctx.fillText(label, 0, -8); ctx.restore(); ctx.restore();
-        }
-    }
+            ctx.fillText(label, 0, (color === "white") ? 4 : -8); ctx.restore(); ctx.restore();
+        },
 
-    const uiController = {
-        update() {
-            const p = {
-                tankL: +document.getElementById('tankL').value, tankW: +document.getElementById('tankW').value,
-                tankH: +document.getElementById('tankH').value, serviceGap: +document.getElementById('gap').value,
-                tanksPerRow: +document.getElementById('tanksPerRow').value, rowCount: +document.getElementById('rowCount').value,
-                beamSize: +document.getElementById('beamSize').value, bottomClearance: +document.getElementById('bottomClearance').value,
-                tolerance: +document.getElementById('tolerance').value, heavierSide: document.getElementById('heavierSide').value,
-                maxSpan: +document.getElementById('maxSpan').value, gap: +document.getElementById('gap').value
-            };
-            const calc = new RackCalculator(p);
-            const renderer = new RackRenderer('rackCanvas');
-            renderer.render(calc);
-            document.getElementById('cuttingList').innerHTML = `
-            <strong>Lista Cięcia:</strong><br>
-            • Sekcje: ${calc.bayCount}<br>
-            • Nogi (pion): ${(calc.bayCount + 1) * 2}x ${calc.totalH}mm<br>
-            • Belki: ${(p.rowCount + 1) * 2}x ${calc.totalW}mm<br>
-            • Poprzeczki: ${(calc.bayCount + 1) * (p.rowCount + 1)}x ${p.tankW + p.tolerance}mm
-        `;
+        drawFront(calc) {
+            const cvs = document.getElementById('rackCanvas');
+            const ctx = cvs.getContext('2d');
+            const s = 0.5;
+            cvs.width = calc.totalW * s + 200;
+            cvs.height = calc.totalH * s + 200;
+            ctx.clearRect(0,0, cvs.width, cvs.height);
+            const ox = 100, oy = 50;
+
+            ctx.fillStyle = "#8d6e63"; // Beams
+            const rowStep = (calc.p.tankH + calc.p.gap + calc.p.beamSize);
+            for (let i = 0; i < calc.levels; i++) {
+                const y = oy + (calc.totalH - 150 - calc.p.beamSize - (i * rowStep)) * s;
+                ctx.fillRect(ox, y, calc.totalW * s, calc.p.beamSize * s);
+            }
+
+            for (let i = 0; i < calc.p.rowCount; i++) {
+                const yBase = oy + (calc.totalH - 150 - calc.p.beamSize - (i * rowStep)) * s;
+                let cx = ox + (calc.p.beamSize * s);
+                for (let b = 0; b < calc.bayCount; b++) {
+                    const bw = calc.bayWidths[b] * s;
+                    const count = calc.dist[b];
+                    const startA = cx + (bw - (count * calc.p.tankL * s)) / 2;
+                    for (let j = 0; j < count; j++) {
+                        ctx.fillStyle = "rgba(173, 216, 230, 0.7)";
+                        ctx.fillRect(startA + (j * calc.p.tankL * s) + 2, yBase - calc.p.tankH * s, calc.p.tankL * s - 4, calc.p.tankH * s);
+                        ctx.strokeRect(startA + (j * calc.p.tankL * s) + 2, yBase - calc.p.tankH * s, calc.p.tankL * s - 4, calc.p.tankH * s);
+                    }
+                    this.drawArrow(ctx, cx, yBase + 10, cx + bw, yBase + 10, `${Math.round(calc.bayWidths[b])}`, "white");
+                    this.drawArrow(ctx, cx + 15, yBase, cx + 15, yBase - calc.p.tankH * s, `${calc.p.tankH}`, "blue");
+                    this.drawArrow(ctx, cx + 15, yBase - calc.p.tankH * s, cx + 15, yBase - rowStep * s + calc.p.beamSize * s, `${calc.p.gap}`, "green");
+                    cx += bw + (calc.p.beamSize * s);
+                }
+            }
+            ctx.fillStyle = "#4a302a"; // Legs
+            let lx = ox;
+            for (let b = 0; b <= calc.bayCount; b++) {
+                ctx.fillRect(lx, oy, calc.p.beamSize * s, calc.totalH * s);
+                lx += (calc.bayWidths[b] || 0) * s + (calc.p.beamSize * s);
+            }
+        },
+
+        drawSide(calc) {
+            const cvs = document.getElementById('sideViewCanvas');
+            const ctx = cvs.getContext('2d');
+            const s = 0.8; const depth = calc.p.tankW + calc.p.tolerance;
+            cvs.width = 400; cvs.height = 350;
+            const ox = 100, oy = 40;
+
+            ctx.fillStyle = "#4a302a"; // Legs
+            ctx.fillRect(ox, oy, calc.p.beamSize*s, 280);
+            ctx.fillRect(ox + depth*s + calc.p.beamSize*s, oy, calc.p.beamSize*s, 280);
+
+            ctx.fillStyle = "#d35400"; // Poprzeczki
+            for(let i=0; i<3; i++) ctx.fillRect(ox + calc.p.beamSize*s, oy + 40 + i*90, depth*s, calc.p.beamSize*s);
+
+            ctx.fillStyle = "#8d6e63"; // Beams end-view
+            for(let i=0; i<3; i++) {
+                ctx.fillRect(ox - 15, oy + 40 + i*90, 15, calc.p.beamSize*s);
+                ctx.fillRect(ox + depth*s + calc.p.beamSize*2*s, oy + 40 + i*90, 15, calc.p.beamSize*s);
+            }
+            this.drawArrow(ctx, ox + calc.p.beamSize*s, oy + 20, ox + (calc.p.beamSize + depth)*s, oy + 20, `${depth}mm`, "black");
+        },
+
+        drawTop(calc) {
+            const cvs = document.getElementById('topViewCanvas');
+            const ctx = cvs.getContext('2d');
+            const s = 0.6; const depth = calc.p.tankW + calc.p.tolerance;
+            cvs.width = 400; cvs.height = 200;
+            const ox = 50, oy = 40;
+
+            ctx.fillStyle = "#8d6e63";
+            ctx.fillRect(ox, oy, 250, calc.p.beamSize*s);
+            ctx.fillRect(ox, oy + depth*s, 250, calc.p.beamSize*s);
+            ctx.fillStyle = "#d35400";
+            ctx.fillRect(ox + 20, oy + calc.p.beamSize*s, calc.p.beamSize*s, (depth - calc.p.beamSize)*s);
+            ctx.fillRect(ox + 200, oy + calc.p.beamSize*s, calc.p.beamSize*s, (depth - calc.p.beamSize)*s);
         }
     };
+
     window.onload = () => uiController.update();
 </script>
 </body>
