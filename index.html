@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Regał Akwarystyczny - Precyzyjne Wymiary</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; display: flex; gap: 20px; padding: 20px; background: #eef2f3; }
+        .controls { background: white; padding: 25px; border-radius: 12px; width: 380px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); position: sticky; top: 20px; height: fit-content; }
+        .preview { background: white; padding: 25px; border-radius: 12px; flex-grow: 1; box-shadow: 0 4px 15px rgba(0,0,0,0.1); min-width: 650px; }
+        .canvas-container { overflow: auto; background: #fff; padding: 10px; border: 1px solid #ddd; border-radius: 8px; }
+        .row { margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+        input { width: 75px; padding: 6px; border: 1px solid #ccc; border-radius: 4px; }
+        .wynik-box { margin-top: 15px; background: #fdf2f2; padding: 15px; border-radius: 8px; border-left: 5px solid #d32f2f; font-size: 14px; line-height: 1.6; }
+        .header { background: #333; color: #fff; padding: 10px; border-radius: 8px; margin-bottom: 10px; text-align: center; font-weight: bold; }
+        button { width: 100%; padding: 12px; margin-top: 10px; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .btn-gen { background: #28a745; color: white; }
+        .btn-print { background: #007bff; color: white; }
+    </style>
+</head>
+<body>
+
+<div class="controls">
+    <div class="header">PARAMETRY (W MM)</div>
+    <div class="row">Dł. akwarium: <input type="number" id="da" value="600"></div>
+    <div class="row">Szer. (głębokość) akwarium: <input type="number" id="sa" value="300"></div>
+    <div class="row">Wys. akwarium: <input type="number" id="wa" value="400"></div>
+    <div class="row">Prześwit serwisowy: <input type="number" id="ps" value="200"></div>
+    <div class="row">Poziomy akwariów: <input type="number" id="naP" value="3"></div>
+    <div class="row">Akwaria w rzędzie: <input type="number" id="naR" value="2"></div>
+    <div class="row">Grubość kantówki: <input type="number" id="gk" value="45"></div>
+    <div class="row">Od ziemi: <input type="number" id="dp" value="150"></div>
+    <div class="row">Luz całkowity: <input type="number" id="lz" value="10"></div>
+
+    <button class="btn-gen" onclick="generuj()">GENERUJ PROJEKT</button>
+    <button class="btn-print" onclick="drukuj()">DRUKUJ PROJEKT</button>
+
+    <div id="wynik" class="wynik-box">Zaktualizuj dane...</div>
+</div>
+
+<div class="preview">
+    <div id="summary" class="header">PROJEKT TECHNICZNY</div>
+    <div class="canvas-container">
+        <canvas id="canvas"></canvas>
+    </div>
+</div>
+
+<script>
+    function drawArrow(ctx, x1, y1, x2, y2, label, color = "red") {
+        const headlen = 10;
+        const angle = Math.atan2(y2 - y1, x2 - x1);
+        ctx.strokeStyle = color; ctx.fillStyle = color; ctx.lineWidth = 1.5;
+        ctx.beginPath(); ctx.moveTo(x1, y1); ctx.lineTo(x2, y2); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x1, y1);
+        ctx.lineTo(x1 + headlen * Math.cos(angle + 0.5), y1 + headlen * Math.sin(angle + 0.5));
+        ctx.lineTo(x1 + headlen * Math.cos(angle - 0.5), y1 + headlen * Math.sin(angle - 0.5)); ctx.fill();
+        ctx.beginPath(); ctx.moveTo(x2, y2);
+        ctx.lineTo(x2 - headlen * Math.cos(angle + 0.5), y2 - headlen * Math.sin(angle + 0.5));
+        ctx.lineTo(x2 - headlen * Math.cos(angle - 0.5), y2 - headlen * Math.sin(angle - 0.5)); ctx.fill();
+        ctx.fillStyle = "black"; ctx.font = "bold 11px Arial"; ctx.textAlign = "center";
+        const tx = (x1 + x2) / 2; const ty = (y1 + y2) / 2;
+        ctx.save(); ctx.translate(tx, ty); if (Math.abs(x1 - x2) < 2) ctx.rotate(-Math.PI / 2);
+        ctx.fillText(label, 0, -5); ctx.restore();
+    }
+
+    function generuj() {
+        const da = +document.getElementById('da').value, sa = +document.getElementById('sa').value;
+        const wa = +document.getElementById('wa').value, ps = +document.getElementById('ps').value;
+        const nP = +document.getElementById('naP').value, nR = +document.getElementById('naR').value;
+        const K = +document.getElementById('gk').value, dp = +document.getElementById('dp').value, L = +document.getElementById('lz').value;
+
+        const nRamki = nP + 1;
+        const szerWewTotal = (da * nR) + L; // Cała przestrzeń na akwaria + luz
+        const podluznica = szerWewTotal + (2 * K); // Długość beli zewnętrznej
+        const poprzeczka = sa + L; // Krótki element między długimi belkami
+        const sekcjaH = wa + ps + K;
+        const wysCalkowita = dp + (nP * sekcjaH) + K;
+
+        const potrzeba6Nog = podluznica > 1200;
+        const iloscNog = potrzeba6Nog ? 6 : 4;
+
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const s = 0.5;
+        canvas.width = podluznica * s + 220; canvas.height = wysCalkowita * s + 180;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const oX = 110, oY = 40;
+
+        // Nogi
+        ctx.fillStyle = "#5d4037";
+        ctx.fillRect(oX, oY, K * s, wysCalkowita * s);
+        ctx.fillRect(oX + (podluznica - K) * s, oY, K * s, wysCalkowita * s);
+        if (potrzeba6Nog) ctx.fillRect(oX + (podluznica/2 - K/2) * s, oY, K * s, wysCalkowita * s);
+
+        // Ramki i Akwaria
+        for (let i = 0; i < nRamki; i++) {
+            let yR = oY + (wysCalkowita - dp - K - (i * sekcjaH)) * s;
+            ctx.fillStyle = "#8d6e63";
+            ctx.fillRect(oX, yR, podluznica * s, K * s);
+
+            if (i < nP) {
+                let ay = yR - (wa * s);
+                // Rysuj akwaria z zachowaniem luzu na końcach
+                for(let j=0; j<nR; j++) {
+                    let ax = oX + (K * s) + (L/2 * s) + (j * da * s);
+                    ctx.fillStyle = "rgba(0, 150, 255, 0.2)";
+                    ctx.fillRect(ax, ay, da * s, wa * s);
+                    ctx.strokeRect(ax, ay, da * s, wa * s);
+                }
+                // Wymiary wewnętrzne ramy (z luzem!)
+                let dimX = oX + (K * s) + 15;
+                drawArrow(ctx, dimX, yR, dimX, ay, `${wa} mm`, "blue");
+                drawArrow(ctx, dimX, ay, dimX, ay - (ps * s), `${ps} mm`, "green");
+            }
+        }
+
+        // Główne wymiary zewnętrzne
+        drawArrow(ctx, oX - 70, oY, oX - 70, oY + (wysCalkowita * s), `${wysCalkowita} mm`);
+        drawArrow(ctx, oX, oY + (wysCalkowita * s) + 70, oX + (podluznica * s), oY + (wysCalkowita * s) + 70, `${podluznica} mm`);
+
+        // Strzałka wymiaru wewnętrznego (pokazuje ile masz miejsca w środku ramy)
+        drawArrow(ctx, oX + (K*s), oY + 20, oX + (podluznica - K)*s, oY + 20, `Wew: ${szerWewTotal} mm`, "purple");
+
+        const sumaPoprzeczek = nRamki * (potrzeba6Nog ? 3 : 2);
+        document.getElementById('wynik').innerHTML = `
+            <strong>LISTA ELEMENTÓW:</strong><br>
+            • Nogi: <b>${iloscNog} szt. x ${wysCalkowita} mm</b><br>
+            • Podłużnice (przód/tył): <b>${nRamki * 2} szt. x ${podluznica} mm</b><br>
+            • Poprzeczki (między belkami): <b>${sumaPoprzeczek} szt. x ${poprzeczka} mm</b><br>
+            <hr>
+            <i>Wew. szerokość ramy (miejsce na szkło): ${szerWewTotal} mm</i>
+        `;
+        document.getElementById('summary').innerHTML = `GABARYTY CAŁKOWITE: ${podluznica} x ${poprzeczka + 2*K} x ${wysCalkowita} mm`;
+    }
+
+    function drukuj() {
+        const content = document.getElementById('wynik').innerHTML;
+        const dims = document.getElementById('summary').innerText;
+        const img = document.getElementById('canvas').toDataURL('image/png');
+        const win = window.open('', '_blank');
+        win.document.write(`<html><body onload="window.print();window.close();"><h1>Projekt Regału</h1><p>${dims}</p><p>${content}</p><img src="${img}" style="max-width:100%"></body></html>`);
+        win.document.close();
+    }
+    window.onload = generuj;
+</script>
+</body>
+</html>
