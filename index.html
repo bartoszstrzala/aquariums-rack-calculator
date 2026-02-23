@@ -33,6 +33,12 @@
 <body>
 
 <div class="sidebar">
+    <div>
+        Konstrukcja regału: <a href="https://www.youtube.com/watch?v=Nu3S3PX9nlc" target="_blank">
+        https://www.youtube.com/watch?v=Nu3S3PX9nlc
+    </a>
+        <br /><br />
+    </div>
     <h2 style="margin-top:0">⚙️ KONFIGURACJA</h2>
     <div class="input-group"><label>Dł. akwarium (mm)</label> <input type="number" id="tankL" value="400"></div>
     <div class="input-group"><label>Szer. akwarium (mm)</label> <input type="number" id="tankW" value="600"></div>
@@ -193,6 +199,12 @@
                     this.drawArrow(ctx, arrowX, yBase - calc.p.tankH * s, arrowX, yBase - rowStep*s + calc.p.beamSize*s, `${calc.p.gap}`, "green", false, true);
                 }
             }
+
+            // POPRAWIONY WYMIAR - W ŚWIETLE (OD PODŁOGI DO DOŁU BELKI)
+            // Pozycje rysowania zgodne z logiką wyższych półek
+            const firstLevelBottomY = oy + (calc.totalH - calc.p.ground) * s;
+            const groundY = oy + calc.totalH * s;
+            this.drawArrow(ctx, ox + (calc.p.beamSize + 15)*s, groundY, ox + (calc.p.beamSize + 15)*s, firstLevelBottomY, `${calc.p.ground}`, "red", false, true);
 
             this.drawArrow(ctx, ox - 70, oy, ox - 70, oy + calc.totalH * s, `${Math.round(calc.totalH)}`, "black");
             this.drawArrow(ctx, ox, oy + calc.totalH * s + 70, ox + calc.totalW * s, oy + calc.totalH * s + 70, `${Math.round(calc.totalW)}`, "black");
