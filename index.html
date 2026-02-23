@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
-    <title>PROJEKT REGAŁU - FINAL</title>
+    <title>PROJEKT REGAŁU - V1</title>
     <style>
         :root { --primary-color: #2c3e50; --accent-color: #27ae60; --bg-color: #f4f7f6; }
         body { font-family: 'Segoe UI', sans-serif; display: flex; height: 100vh; margin: 0; background: var(--bg-color); }
@@ -62,6 +62,7 @@
     <div class="input-group"><label>Szer. akwarium (mm)</label> <input type="number" id="tankW" value="600"></div>
     <div class="input-group"><label>Wys. akwarium (mm)</label> <input type="number" id="tankH" value="400"></div>
     <div class="input-group"><label>Prześwit serwis (mm)</label> <input type="number" id="gap" value="200"></div>
+    <div class="input-group"><label>Grubość półki (mm)</label> <input type="number" id="shelfThick" value="18"></div>
     <div class="input-group"><label>Wys. od ziemi (mm)</label> <input type="number" id="ground" value="150"></div>
     <div class="input-group"><label>Akwaria w rzędzie</label> <input type="number" id="tanksPerRow" value="11"></div>
     <div class="input-group"><label>Ilość poziomów</label> <input type="number" id="rowCount" value="2"></div>
@@ -78,9 +79,8 @@
     <div style="margin-top: 20px; padding: 15px; background: #e8f4fd; border-radius: 6px; border: 1px solid #b3d7f2; font-size: 13px; line-height: 1.5;">
         <h4 style="margin-top:0; color: #2980b9;">ℹ️ POMOC</h4>
         <ul style="padding-left: 20px; margin: 0;">
-            <li>Po zmianie danych kliknij <strong>PRZELICZ I ODŚWIEŻ</strong>, aby zaktualizować projekt i listę cięć.</li>
-            <li>Przycisk <strong>UDOSTĘPNIJ PROJEKT</strong> kopiuje do schowka link z Twoimi aktualnymi ustawieniami.</li>
-            <li>Wydruk automatycznie dopasowuje skalę rysunku do szerokości kartki (poziomo).</li>
+            <li>Po zmianie danych kliknij <strong>PRZELICZ I ODŚWIEŻ</strong>.</li>
+            <li>Przycisk <strong>UDOSTĘPNIJ PROJEKT</strong> zapisuje też grubość półki.</li>
         </ul>
     </div>
 
@@ -116,7 +116,7 @@
 
         shareProject() {
             const params = new URLSearchParams();
-            const inputs = ['tankL', 'tankW', 'tankH', 'gap', 'ground', 'tanksPerRow', 'rowCount', 'beamSize', 'tolerance', 'maxSpan', 'heavierSide'];
+            const inputs = ['tankL', 'tankW', 'tankH', 'gap', 'ground', 'tanksPerRow', 'rowCount', 'beamSize', 'tolerance', 'maxSpan', 'heavierSide', 'shelfThick'];
             inputs.forEach(id => params.set(id, document.getElementById(id).value));
 
             const newUrl = window.location.origin + window.location.pathname + '?' + params.toString();
@@ -132,7 +132,7 @@
                 tanksPerRow: +document.getElementById('tanksPerRow').value, beamSize: +document.getElementById('beamSize').value,
                 tolerance: +document.getElementById('tolerance').value, maxSpan: +document.getElementById('maxSpan').value,
                 gap: +document.getElementById('gap').value, heavierSide: document.getElementById('heavierSide').value,
-                ground: +document.getElementById('ground').value
+                ground: +document.getElementById('ground').value, shelfThick: +document.getElementById('shelfThick').value
             };
 
             const tankSpace = p.tankL + (p.tolerance / p.tanksPerRow);
@@ -143,7 +143,9 @@
 
             const bayWidths = dist.map(count => (count * p.tankL) + (count * (p.tolerance / p.tanksPerRow)));
             const totalW = bayWidths.reduce((a, b) => a + b, 0) + ((dist.length + 1) * p.beamSize);
-            const totalH = p.ground + (p.rowCount * (p.tankH + p.gap + p.beamSize)) + p.beamSize;
+
+            // Wysokość: ziemia + poziomy (belka + półka + akwarium + gap) + ostatnia belka zamykająca
+            const totalH = p.ground + (p.rowCount * (p.beamSize + p.shelfThick + p.tankH + p.gap)) + p.beamSize;
 
             this.lastCalc = { p, dist, bayWidths, totalW, totalH, bayCount: dist.length, levels: p.rowCount + 1 };
             this.render(this.lastCalc);
@@ -151,13 +153,21 @@
 
         render(calc) {
             document.getElementById('totalDimsHeader').innerText = `WYMIAR: ${Math.round(calc.totalW)} x ${Math.round(calc.totalH)} x ${calc.p.tankW} mm`;
-            document.getElementById('cuttingListContent').innerHTML = `
+
+            let html = `
             • <strong>Nogi (Pion):</strong> ${(calc.bayCount + 1) * 2} szt. x <span class="important">${Math.round(calc.totalH)}mm</span><br>
             • <strong>Belki podłużne (DŁUGIE):</strong> ${calc.levels * 2} szt. x <span class="important">${Math.round(calc.totalW)}mm</span><br>
             • <strong>Poprzeczki (Boczne):</strong> ${(calc.bayCount + 1) * calc.levels} szt. x <span class="important">${calc.p.tankW}mm</span><br>
-            <hr>
-            <strong>Rozstawy przęseł (światło):</strong> ${calc.bayWidths.map(w => Math.round(w)).join(' | ')} mm
-            `;
+            <br>
+            <strong>Formatki Półek (Sklejka/Płyta):</strong><br>`;
+
+            calc.bayWidths.forEach((w, i) => {
+                html += `• Przęsło ${i+1}: ${calc.p.rowCount} szt. x <span class="important">${Math.round(w)} x ${calc.p.tankW}mm</span> (gr. ${calc.p.shelfThick}mm)<br>`;
+            });
+
+            html += `<hr><strong>Rozstawy przęseł (światło):</strong> ${calc.bayWidths.map(w => Math.round(w)).join(' | ')} mm`;
+
+            document.getElementById('cuttingListContent').innerHTML = html;
             this.drawFront(calc);
         },
 
@@ -196,20 +206,38 @@
             const cvs = document.getElementById('rackCanvas'); const ctx = cvs.getContext('2d');
             const s = (window.matchMedia('print').matches) ? (1000 / calc.totalW) : this.currentScale;
 
-            cvs.width = calc.totalW * s + 350;
-            cvs.height = calc.totalH * s + 300;
+            // Zwiększony margines pionowy (offsetY), żeby nie ucięło góry nóg i strzałek
+            const offsetX = 120;
+            const offsetY = 150;
+
+            cvs.width = calc.totalW * s + (offsetX * 2);
+            cvs.height = calc.totalH * s + (offsetY * 2);
             ctx.clearRect(0,0, cvs.width, cvs.height);
-            const ox = 120, oy = 80;
 
-            const rowStep = (calc.p.tankH + calc.p.gap + calc.p.beamSize);
+            const ox = offsetX, oy = offsetY;
 
-            ctx.fillStyle = "#8d6e63";
+            // Krok rzędu obejmuje teraz kantówkę, półkę, akwarium i serwis
+            const rowStep = (calc.p.tankH + calc.p.gap + calc.p.beamSize + calc.p.shelfThick);
+
+            // Rysowanie belek i półek
             for (let i = 0; i < calc.levels; i++) {
-                const y = oy + (calc.totalH - calc.p.ground - calc.p.beamSize - (i * rowStep)) * s;
-                ctx.fillRect(ox, y, calc.totalW * s, calc.p.beamSize * s);
-                ctx.strokeRect(ox, y, calc.totalW * s, calc.p.beamSize * s);
+                const yBeam = oy + (calc.totalH - calc.p.ground - calc.p.beamSize - (i * rowStep)) * s;
+
+                // Belka pozioma
+                ctx.fillStyle = "#8d6e63";
+                ctx.fillRect(ox, yBeam, calc.totalW * s, calc.p.beamSize * s);
+                ctx.strokeRect(ox, yBeam, calc.totalW * s, calc.p.beamSize * s);
+
+                // Półka (rysowana na belce, pod akwarium - tylko jeśli to nie jest najwyższa belka zamykająca bez akwarium)
+                if(i < calc.p.rowCount) {
+                    ctx.fillStyle = "#bdc3c7"; // kolor półki
+                    const yShelf = yBeam - (calc.p.shelfThick * s);
+                    ctx.fillRect(ox, yShelf, calc.totalW * s, calc.p.shelfThick * s);
+                    ctx.strokeRect(ox, yShelf, calc.totalW * s, calc.p.shelfThick * s);
+                }
             }
 
+            // Nogi
             ctx.fillStyle = "#4a302a";
             let lx = ox;
             let legPositions = [];
@@ -220,33 +248,43 @@
                 lx += (calc.bayWidths[b] || 0) * s + (calc.p.beamSize * s);
             }
 
+            // Akwaria i strzałki w przęsłach
             for (let i = 0; i < calc.p.rowCount; i++) {
-                const yBase = oy + (calc.totalH - calc.p.ground - calc.p.beamSize - (i * rowStep)) * s;
+                const yBeam = oy + (calc.totalH - calc.p.ground - calc.p.beamSize - (i * rowStep)) * s;
+                const yShelfTop = yBeam - (calc.p.shelfThick * s);
+
                 for (let b = 0; b < calc.bayCount; b++) {
                     const bw = calc.bayWidths[b] * s;
                     const cx = legPositions[b] + (calc.p.beamSize * s);
                     const count = calc.dist[b];
                     const startA = cx + (bw - (count * calc.p.tankL * s)) / 2;
 
+                    // Akwaria
                     for (let j = 0; j < count; j++) {
                         ctx.fillStyle = "rgba(173, 216, 230, 0.7)";
-                        ctx.fillRect(startA + (j * calc.p.tankL * s) + 2, yBase - calc.p.tankH * s, calc.p.tankL * s - 4, calc.p.tankH * s);
+                        ctx.fillRect(startA + (j * calc.p.tankL * s) + 2, yShelfTop - calc.p.tankH * s, calc.p.tankL * s - 4, calc.p.tankH * s);
                     }
 
-                    this.drawArrow(ctx, cx, yBase + (calc.p.beamSize*s/2), cx + bw, yBase + (calc.p.beamSize*s/2), `${Math.round(calc.bayWidths[b])}`, "white", true);
+                    // Strzałka szerokości przęsła
+                    this.drawArrow(ctx, cx, yBeam + (calc.p.beamSize*s/2), cx + bw, yBeam + (calc.p.beamSize*s/2), `${Math.round(calc.bayWidths[b])}`, "white", true);
 
-                    const arrowX = cx + 15*s;
-                    this.drawArrow(ctx, arrowX, yBase, arrowX, yBase - calc.p.tankH * s, `${calc.p.tankH}`, "blue", false, true);
-                    this.drawArrow(ctx, arrowX, yBase - calc.p.tankH * s, arrowX, yBase - rowStep*s + calc.p.beamSize*s, `${calc.p.gap}`, "green", false, true);
+                    // Strzałki pionowe
+                    const arrowX = cx + 20*s;
+                    // Wysokość akwarium (od góry półki)
+                    this.drawArrow(ctx, arrowX, yShelfTop, arrowX, yShelfTop - calc.p.tankH * s, `${calc.p.tankH}`, "blue", false, true);
+                    // Prześwit (gap)
+                    this.drawArrow(ctx, arrowX, yShelfTop - calc.p.tankH * s, arrowX, yShelfTop - calc.p.tankH * s - calc.p.gap * s, `${calc.p.gap}`, "green", false, true);
                 }
             }
 
+            // Strzałka czerwona (ground) - od ziemi do dołu pierwszej belki
             const firstLevelBottomY = oy + (calc.totalH - calc.p.ground) * s;
             const groundY = oy + calc.totalH * s;
             this.drawArrow(ctx, ox + (calc.p.beamSize + 15)*s, groundY, ox + (calc.p.beamSize + 15)*s, firstLevelBottomY, `${calc.p.ground}`, "red", false, true);
 
-            this.drawArrow(ctx, ox - 70, oy, ox - 70, oy + calc.totalH * s, `${Math.round(calc.totalH)}`, "black");
-            this.drawArrow(ctx, ox, oy + calc.totalH * s + 70, ox + calc.totalW * s, oy + calc.totalH * s + 70, `${Math.round(calc.totalW)}`, "black");
+            // Wymiary gabarytowe (czarne)
+            this.drawArrow(ctx, ox - 80, oy, ox - 80, oy + calc.totalH * s, `${Math.round(calc.totalH)}`, "black");
+            this.drawArrow(ctx, ox, oy + calc.totalH * s + 80, ox + calc.totalW * s, oy + calc.totalH * s + 80, `${Math.round(calc.totalW)}`, "black");
         }
     };
 
