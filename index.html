@@ -2,49 +2,19 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
-    <title>Projektant Regału - Multi-Bay System FIXED</title>
+    <title>Projektant Regału - Ciasne Przęsła</title>
     <style>
         :root { --primary-color: #2c3e50; --accent-color: #27ae60; --bg-color: #f4f7f6; }
         body { font-family: 'Segoe UI', sans-serif; display: flex; height: 100vh; margin: 0; background: var(--bg-color); color: var(--primary-color); overflow: hidden; }
-
-        .sidebar {
-            background: white;
-            padding: 25px;
-            width: 420px;
-            min-width: 420px;
-            max-width: 420px;
-            box-shadow: 2px 0 15px rgba(0,0,0,0.1);
-            height: 100vh;
-            overflow-y: auto;
-            box-sizing: border-box;
-            z-index: 10;
-        }
-
-        .main-view {
-            flex-grow: 1;
-            height: 100vh;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
-        }
-
-        .canvas-wrapper {
-            flex-grow: 1;
-            overflow: auto;
-            background: #eee;
-            padding: 80px;
-            display: flex;
-            justify-content: flex-start;
-            align-items: flex-start;
-        }
-
+        .sidebar { background: white; padding: 25px; width: 420px; min-width: 420px; box-shadow: 2px 0 15px rgba(0,0,0,0.1); height: 100vh; overflow-y: auto; box-sizing: border-box; z-index: 10; }
+        .main-view { flex-grow: 1; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        .canvas-wrapper { flex-grow: 1; overflow: auto; background: #eee; padding: 80px; display: flex; justify-content: flex-start; align-items: flex-start; }
         .input-group { margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; gap: 10px; }
-        label { font-size: 14px; font-weight: 600; flex-grow: 1; }
-        input, select { width: 100px; padding: 8px; border: 1px solid #dcdde1; border-radius: 4px; }
+        label { font-size: 13px; font-weight: 600; flex-grow: 1; }
+        input, select { width: 90px; padding: 7px; border: 1px solid #dcdde1; border-radius: 4px; }
         .results-panel { margin-top: 15px; padding: 15px; background: #f8f9fa; border-left: 4px solid var(--accent-color); font-size: 14px; }
         button { width: 100%; padding: 15px; background: var(--accent-color); color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 16px; margin-top: 10px; }
         canvas { background: white; box-shadow: 0 4px 20px rgba(0,0,0,0.1); flex-shrink: 0; }
-        h3 { margin-top: 0; margin-bottom: 15px; border-bottom: 2px solid var(--bg-color); padding-bottom: 5px; }
     </style>
 </head>
 <body>
@@ -55,17 +25,17 @@
     <div class="input-group"><label>Szer. akwarium (mm)</label> <input type="number" id="tankW" value="400"></div>
     <div class="input-group"><label>Wys. akwarium (mm)</label> <input type="number" id="tankH" value="400"></div>
     <div class="input-group"><label>Prześwit serwis (mm)</label> <input type="number" id="gap" value="200"></div>
-    <div class="input-group"><label>Akwaria w rzędzie</label> <input type="number" id="tanksPerRow" value="6"></div>
+    <div class="input-group"><label>Akwaria w rzędzie</label> <input type="number" id="tanksPerRow" value="11"></div>
     <div class="input-group"><label>Ilość poziomów</label> <input type="number" id="rowCount" value="2"></div>
     <div class="input-group"><label>Grubość kantówki (mm)</label> <input type="number" id="beamSize" value="45"></div>
     <div class="input-group"><label>Wys. od ziemi (mm)</label> <input type="number" id="bottomClearance" value="150"></div>
     <div class="input-group"><label>Luz całkowity (mm)</label> <input type="number" id="tolerance" value="30"></div>
+    <div class="input-group" style="background: #e8f5e9; padding: 5px; border-radius: 4px;">
+        <label>Max rozpiętość przęsła (mm)</label> <input type="number" id="maxSpan" value="1000">
+    </div>
     <div class="input-group">
-        <label>Preferowana strona</label>
-        <select id="heavierSide">
-            <option value="left">Lewa dociążona</option>
-            <option value="right">Prawa dociążona</option>
-        </select>
+        <label>Strona dociążona</label>
+        <select id="heavierSide"><option value="left">Lewa</option><option value="right">Prawa</option></select>
     </div>
     <button onclick="uiController.update()">GENERUJ PROJEKT</button>
     <div id="cuttingList" class="results-panel"></div>
@@ -79,34 +49,32 @@
     class RackCalculator {
         constructor(p) {
             this.p = p;
-            const totalTankL = p.tankL * p.tanksPerRow;
-            const maxBay = 1100; // Max rozpiętość przęsła
+            const tolPerTank = p.tolerance / p.tanksPerRow;
+            const tankEffectiveL = p.tankL + tolPerTank;
 
-            // Obliczamy liczbę przęseł
-            this.bayCount = Math.ceil(totalTankL / maxBay);
-            if (this.bayCount < 1) this.bayCount = 1;
+            // 1. Ile akwariów mieści się w jednym przęśle bez przebicia maxSpan?
+            let maxTanksPerBay = Math.floor(p.maxSpan / tankEffectiveL);
+            if (maxTanksPerBay < 1) maxTanksPerBay = 1;
 
-            // Dystrybucja akwariów
-            this.distribution = this.calculateDistribution(p.tanksPerRow, this.bayCount, p.heavierSide);
+            // 2. Budujemy dystrybucję (upakowanie od wybranej strony)
+            this.distribution = [];
+            let remainingTanks = p.tanksPerRow;
 
-            // Szerokość każdego przęsła (światło)
-            const tolPerBay = p.tolerance / this.bayCount;
-            this.bayWidths = this.distribution.map(count => (count * p.tankL) + tolPerBay);
+            while (remainingTanks > 0) {
+                let tanksInThisBay = Math.min(remainingTanks, maxTanksPerBay);
+                this.distribution.push(tanksInThisBay);
+                remainingTanks -= tanksInThisBay;
+            }
 
-            // Szerokość całkowita
+            if (p.heavierSide === 'right') this.distribution.reverse();
+
+            this.bayCount = this.distribution.length;
+
+            // 3. Szerokości przęseł - każde przęsło bierze luz proporcjonalnie do ilości akwariów
+            this.bayWidths = this.distribution.map(count => (count * p.tankL) + (count * tolPerTank));
+
             this.totalW = this.bayWidths.reduce((a, b) => a + b, 0) + ((this.bayCount + 1) * p.beamSize);
             this.totalH = p.bottomClearance + (p.rowCount * (p.tankH + p.serviceGap + p.beamSize)) + p.beamSize;
-        }
-
-        calculateDistribution(total, bays, side) {
-            let dist = new Array(bays).fill(Math.floor(total / bays));
-            let rem = total % bays;
-            if (side === 'left') {
-                for (let i = 0; i < rem; i++) dist[i]++;
-            } else {
-                for (let i = bays - 1; i > bays - 1 - rem; i--) dist[i]++;
-            }
-            return dist;
         }
     }
 
@@ -125,7 +93,6 @@
             this.canvas.height = calc.totalH * s + 300;
             this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-            // 1. POZIOME
             this.ctx.fillStyle = "#8d6e63";
             const rowH = (p.tankH + p.serviceGap + p.beamSize);
             for (let i = 0; i <= p.rowCount; i++) {
@@ -133,7 +100,6 @@
                 this.ctx.fillRect(this.offX, y, calc.totalW * s, p.beamSize * s);
             }
 
-            // 2. AKWARIA
             for (let i = 0; i < p.rowCount; i++) {
                 const shelfY = this.offY + (calc.totalH - p.bottomClearance - p.beamSize - (i * rowH)) * s;
                 const tankY = shelfY - (p.tankH * s);
@@ -144,7 +110,6 @@
                 }
             }
 
-            // 3. NOGI
             this.ctx.fillStyle = "#4a302a";
             let legX = this.offX;
             for (let b = 0; b <= calc.bayCount; b++) {
@@ -174,6 +139,11 @@
             const yB = this.offY + (calc.totalH - p.bottomClearance - p.beamSize) * s;
             this.drawArrow(this.offX - 70, this.offY, this.offX - 70, this.offY + calc.totalH * s, `${calc.totalH}mm`, "black");
             this.drawArrow(this.offX, this.offY + calc.totalH * s + 80, this.offX + calc.totalW * s, this.offY + calc.totalH * s + 80, `${calc.totalW}mm`, "black");
+
+            const dimX = this.offX + (p.beamSize * s) + (calc.bayWidths[0] * s / 8);
+            this.drawArrow(dimX, yB, dimX, yB - p.tankH * s, `${p.tankH}`, "blue");
+            this.drawArrow(dimX, yB - p.tankH * s, dimX, yB - p.tankH * s - p.serviceGap * s, `${p.gap}`, "green");
+
             let curX = this.offX + (p.beamSize * s);
             for (let b = 0; b < calc.bayCount; b++) {
                 this.drawArrow(curX, yB + 40*s, curX + calc.bayWidths[b]*s, yB + 40*s, `${Math.round(calc.bayWidths[b])}mm`, "brown");
@@ -206,18 +176,18 @@
                 tankH: +document.getElementById('tankH').value, serviceGap: +document.getElementById('gap').value,
                 tanksPerRow: +document.getElementById('tanksPerRow').value, rowCount: +document.getElementById('rowCount').value,
                 beamSize: +document.getElementById('beamSize').value, bottomClearance: +document.getElementById('bottomClearance').value,
-                tolerance: +document.getElementById('tolerance').value, heavierSide: document.getElementById('heavierSide').value
+                tolerance: +document.getElementById('tolerance').value, heavierSide: document.getElementById('heavierSide').value,
+                maxSpan: +document.getElementById('maxSpan').value, gap: +document.getElementById('gap').value
             };
             const calc = new RackCalculator(p);
             const renderer = new RackRenderer('rackCanvas');
             renderer.render(calc);
-            const legPairs = calc.bayCount + 1;
             document.getElementById('cuttingList').innerHTML = `
             <strong>Lista Cięcia:</strong><br>
-            • Liczba przęseł (Bays): ${calc.bayCount}<br>
-            • Nogi (pion): ${legPairs * 2}x ${calc.totalH}mm<br>
-            • Belki front/tył: ${(p.rowCount + 1) * 2}x ${calc.totalW}mm<br>
-            • Poprzeczki: ${legPairs * (p.rowCount + 1)}x ${p.tankW + p.tolerance}mm
+            • Sekcje: ${calc.bayCount}<br>
+            • Nogi (pion): ${(calc.bayCount + 1) * 2}x ${calc.totalH}mm<br>
+            • Belki: ${(p.rowCount + 1) * 2}x ${calc.totalW}mm<br>
+            • Poprzeczki: ${(calc.bayCount + 1) * (p.rowCount + 1)}x ${p.tankW + p.tolerance}mm
         `;
         }
     };
