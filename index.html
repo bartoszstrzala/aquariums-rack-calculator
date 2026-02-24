@@ -24,7 +24,7 @@
         .step-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 18px; }
         .step-table th, .step-table td { border: 1px solid #ddd; padding: 12px; text-align: left; }
         .step-table th { background-color: #f2f2f2; }
-        @media print { .sidebar, #mobileToggle { display: none !important; } .print-page { box-shadow: none; margin: 0 !important; width: 100% !important; page-break-after: always; } }
+        @media print { .sidebar, #mobileToggle { display: none !important; } .print-page { box-shadow: none; margin: 0 !important; padding: 5mm !important; width: 100% !important; page-break-after: always; } }
     </style>
 </head>
 <body>
@@ -112,9 +112,10 @@
         render(calc) {
             document.getElementById('totalDimsHeader').innerText = `WYMIAR REGAŁU: ${Math.round(calc.totalW)} x ${Math.round(calc.totalH)} x ${calc.p.tankW} mm`;
 
+            // NAPRAWIONO: Poprzeczki boczne mają teraz pełną szerokość (tankW)
             let html = `• <strong>Nogi:</strong> ${(calc.bayCount + 1) * 2} szt. x <span class="important">${Math.round(calc.totalH)}mm</span><br>
                     • <strong>Belki podłużne:</strong> ${calc.levels * 2} szt. x <span class="important">${Math.round(calc.totalW)}mm</span><br>
-                    • <strong>Poprzeczki boczne (krótkie):</strong> ${(calc.bayCount + 1) * calc.levels} szt. x <span class="important">${calc.p.tankW - (2 * calc.p.beamSize)}mm</span><br><br>
+                    • <strong>Poprzeczki boczne (krótkie):</strong> ${(calc.bayCount + 1) * calc.levels} szt. x <span class="important">${calc.p.tankW}mm</span><br><br>
                     <strong>Formatki półek:</strong><br>`;
             calc.bayWidths.forEach((w, i) => {
                 html += `• Przęsło ${i+1}: ${calc.p.rowCount} szt. x <span class="important">${Math.round(w)} x ${calc.p.tankW}mm</span><br>`;
